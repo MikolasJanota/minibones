@@ -130,15 +130,6 @@ void Worker::process_model(const vec<lbool>& model) {
 bool Worker::is_backbone(const Lit& literal) const
 {return bbInfo.is_bb(literal);}
 
-bool Worker::is_backbone(UINT var) const
-{return is_backbone(~mkLit(var)) || is_backbone(mkLit(var));}
-
-bool Worker::backbone_sign(UINT var) const {
-    assert(is_backbone(var));
-    return is_backbone(mkLit(var));
-
-}
-
 /*------------------------  debugging ----------------------------------------*/
 
 bool Worker::is_complete() const {

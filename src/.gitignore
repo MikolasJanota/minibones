@@ -3,6 +3,7 @@ minisat/core/depend.mk
 *.hh~
 *.cc~
 Makefile~
+Makefile.bak
 # Ignore executable 
 minibones.exe
 minibones

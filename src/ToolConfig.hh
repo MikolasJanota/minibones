@@ -70,6 +70,10 @@ public:
   inline void set_input_file_name (const char* value) { _input_file_name = value; }
   inline string get_input_file_name() { return _input_file_name;}
 
+  int get_use_upper_bound() const { return _use_upper_bound; }
+  void set_use_upper_bound(bool value = true) { _use_upper_bound = value; }
+
+
   int get_self_test() const { return _self_test; }
   void set_self_test(bool value = true) { _self_test = value; }
 
@@ -187,6 +191,8 @@ protected:
 
   string _input_file_name;
       
+  bool _use_upper_bound;
+
   bool _self_test;
 
   int _verbosity;

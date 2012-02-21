@@ -11,7 +11,9 @@
 //#include "tests.hh"
 #include "ReadCNF.hh"
 #include "auxiliary.hh"
+#include "BackboneInformation.hh"
 #include "Worker.hh"
+#include "UpperBound.hh"
 using std::cout;
 using std::cin;
 using namespace minibones;
@@ -19,13 +21,15 @@ using namespace minibones;
 ofstream        output_file;
 ToolConfig      config;
 Worker          *pworker=NULL;
+UpperBound      *pupperbound=NULL;
 Range           range;
 bool            instance_sat = false;
 
 void print_header(ToolConfig& config);
 bool parse_options(int argc, char** argv, /*out*/ToolConfig& config);
-void print_backbone(const Worker& worker, const Range& range, ToolConfig& config, ostream& output);
+void print_backbone(const BackboneInformation& worker, const Range& range, ToolConfig& config, ostream& output);
 int  run_worker(ToolConfig& config, ostream& output);
+int run_upper_bound(ToolConfig& config, ostream& output);
 void register_sig_handlers();
 
 int main(int argc, char** argv) {
@@ -39,11 +43,44 @@ int main(int argc, char** argv) {
     const bool tests_okay =  true;// test_all();
     cout << "self test: " << (tests_okay ? "OK" : "FAIL") << endl;
     return_value = tests_okay ? 0 : 20;
+  } else if (config.get_use_upper_bound()) {
+    return_value = run_upper_bound(config, output);
   } else {
     return_value = run_worker(config, output);
   }
   return return_value;
 }
+
+
+int run_upper_bound(ToolConfig& config, ostream& output) {
+  //read input
+  bool read_standard = config.get_input_file_name()=="-";  
+  ifstream inpf;
+  if (!read_standard) inpf.open(config.get_input_file_name().c_str(), ifstream::in);
+  Reader r(read_standard ? cin : inpf);
+  ReadCNF reader(r);
+  reader.read();
+  //determine which part of variables to compute backbone of
+  range=Range(1,reader.get_max_id());
+  output << "range: "<<range.first<<"-"<<range.second<<endl;
+  pupperbound = new UpperBound(config,output, reader.get_max_id(), reader.get_clause_vector());
+  UpperBound& upperbound=*pupperbound;
+  if (!upperbound.initialize()) {//unsatisfiable
+    config.prefix(output) << "instance unsatisfiable" << endl;
+    output << "s 0" << endl;
+    delete pupperbound; 
+    return 20;
+  }
+  instance_sat = true;
+  //run upperbound
+  upperbound.run();
+  config.prefix(output) << "computation completed " << endl;
+  //print results
+  print_backbone(upperbound, range, config, output);
+  delete pupperbound; 
+  return 10;
+}
+
 
 int run_worker(ToolConfig& config, ostream& output) {
   //read input
@@ -74,7 +111,7 @@ int run_worker(ToolConfig& config, ostream& output) {
   return 10;
 }
 
-void print_backbone(const Worker& worker, const Range& range, ToolConfig& config, ostream& output) {
+void print_backbone(const BackboneInformation& worker, const Range& range, ToolConfig& config, ostream& output) {
   output << "s 1" << endl;
   output << "v ";
   size_t counter = 0;
@@ -123,10 +160,10 @@ void print_header(ToolConfig& config) {
 bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "rl")) != -1) {
+  while ((c = getopt(argc, argv, "url")) != -1) {
     switch (c) {
-    case 'l':
-      config.set_scdc_pruning();
+    case 'u':
+      config.set_use_upper_bound(true);
       break;
     case 'r':
       config.set_rotatable_pruning(true);

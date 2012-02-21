@@ -21,7 +21,6 @@ ostream& print(ostream& out, const vec<Lit>& lv) {for (int i=0;i<lv.size();++i) 
 
 ostream& print(ostream& out, const vector<Lit>& lv) {for (size_t i=0;i<lv.size();++i) out << lv[i] << " "; return out;}
 
-
 ostream& print_model(ostream& out, const vec<lbool>& lv, int l, int r) {
   for (int i=l;i<=r;++i) {
     int v=0;
