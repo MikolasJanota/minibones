@@ -157,7 +157,7 @@ void print_header(ToolConfig& config) {
   cout_pref<<endl;
 }
 
-bool parse_options(int argc, char** argv, ToolConfig& config) {
+ bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
   while ((c = getopt(argc, argv, "url")) != -1) {
@@ -167,6 +167,9 @@ bool parse_options(int argc, char** argv, ToolConfig& config) {
       break;
     case 'r':
       config.set_rotatable_pruning(true);
+      break;
+    case 'l':
+      config.set_scdc_pruning();
       break;
     case '?':
       if (optopt == '?')

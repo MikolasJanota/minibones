@@ -127,22 +127,23 @@ void Worker::process_model(const vec<lbool>& model) {
 }
 
 /*-----------------------------  getters -------------------------------------*/
+
 bool Worker::is_backbone(const Lit& literal) const
 {return bbInfo.is_bb(literal);}
 
 /*------------------------  debugging ----------------------------------------*/
 
 bool Worker::is_complete() const {
-    for (Var variable=1; (UINT)variable<max_id; ++variable) {
-        const Lit pl = mkLit(variable);
-        const Lit nl = ~mkLit(variable);
-        const bool ok = !to_test[variable]
-               || (   (!bbInfo.might_be_bb(pl) || bbInfo.is_bb(pl))
-                   && (!bbInfo.might_be_bb(nl) || bbInfo.is_bb(nl)) );
-        assert (!bbInfo.is_bb(pl) || !bbInfo.is_bb(nl));
-        if (!ok) return false;
-    }
-    return true;
+  for (Var variable=1; variable<=max_id; ++variable) {
+    const Lit pl = mkLit(variable);
+    const Lit nl = ~mkLit(variable);
+    const bool ok = !to_test[variable]
+      || (   (!bbInfo.might_be_bb(pl) || bbInfo.is_bb(pl))
+             && (!bbInfo.might_be_bb(nl) || bbInfo.is_bb(nl)) );
+    assert (!bbInfo.is_bb(pl) || !bbInfo.is_bb(nl));
+    if (!ok) return false;
+  }
+  return true;
 }
 
 /*----------------------------  dummy ----------------------------------------*/
