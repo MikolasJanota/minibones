@@ -1,14 +1,30 @@
 #!/bin/bash
 R=0
+PS="-l -r -u -ul -ur" 
+
+ST=${RANDOM}
+
+#echo '../tests/r3_50_200_1.cnf'  | while read f 
+FAIL=false
 ls ../tests/*.cnf | while read f 
 do 
-echo -n $f ' '
-../src/minibones $f 2>&1 >/dev/null ; 
-let RV=$? ; 
-if ( [ ${RV} != 10 ] && [ ${RV} != 20 ] ); 
-then echo error: $f; R=100
-else echo OK
-fi  
+  N=`basename ${f}`
+  echo $N
+  TEST_STR=""
+  for P in ${PS} ""; do
+    OF=/tmp/${N}.${P}.${ST}.out
+    ../src/minibones ${P}  $f 2>/dev/null >${OF}
+    TEST_STR=${TEST_STR}" v "${OF} 
+  done
+  bbcmp.py ${TEST_STR}
+
+  if [ $? != 0 ]; then
+    FAIL=true
+  fi 
 done
 
-exit $R
+if $FAIL; then
+  echo FAIL
+else
+  echo OK
+fi
