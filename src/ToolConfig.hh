@@ -1,0 +1,223 @@
+//bc:jpms,mj
+/*----------------------------------------------------------------------------*\
+ * File:        ToolConfig.hh
+\*----------------------------------------------------------------------------*/
+//ec:jpms,mj
+
+#ifndef _TOOLCONFIG_H
+#define _TOOLCONFIG_H 1
+#include <assert.h>
+#include <string>
+using std::string;
+using std::ostream;
+
+static const char* const build_date         = ""BUILDDATE"";
+//static const char* dist_date    = ""DISTDATE"";
+static const char* const changeset          = ""CHANGESET"";
+static const char* const release_date       = ""RELDATE"";
+//static const char* release      = "0.5";
+static const char* const toolname     = "MiniBones";
+static const char* const authorname   = "Mikolas Janota";
+static const char* const authoremail  = "mikolas.janota@gmail.com";
+static const char* const contribs     = "J. Marques-Silva & I. Lynce";
+
+
+//jpms:bc
+/*----------------------------------------------------------------------------*\
+ * Types & Defines
+\*----------------------------------------------------------------------------*/
+//jpms:ec
+
+typedef enum dc_modes {
+  DC_None = 0x1000,
+  DC_VL = 0x1001,
+  DC_SC = 0x1002
+} DCModes;
+
+#define cfg_pref  config.get_prefix()
+
+#define cout_pref cout << cfg_pref
+
+#define report(x) cout << cfg_pref << x << endl;
+
+
+//jpms:bc
+/*----------------------------------------------------------------------------*\
+ * Class: ToolConfig
+ *
+ * Purpose: Options configuring tool execution.
+\*----------------------------------------------------------------------------*/
+//jpms:ec
+
+class ToolConfig {
+public:
+
+  ToolConfig()
+  : _cmdstr()
+  , _self_test(false)
+  , _dc_pruning(DC_None)
+  , _rotatable_pruning(false)
+  {
+    _verbosity = 1; _timeout = 3600; _comp_fmt = true;
+    _opt_level = 2; _runs_pvar = 1;  
+    _output_prefix = "c "; _stats = false;
+    set_run_mode(false, true); _incr_mode = true; _phase = 2;
+    _implication_order = false;
+  }
+
+  inline ostream& prefix(ostream& output) const {return output << get_prefix();}
+  
+  inline void set_input_file_name (const char* value) { _input_file_name = value; }
+  inline string get_input_file_name() { return _input_file_name;}
+
+  int get_self_test() const { return _self_test; }
+  void set_self_test(bool value = true) { _self_test = value; }
+
+  int get_rotatable_pruning() const { return _rotatable_pruning; }
+  void set_rotatable_pruning(bool value = true) { _rotatable_pruning = value; }
+
+
+  int get_verbosity()  const  { return _verbosity; }
+
+  void set_verbosity(int verb) { _verbosity = verb; }
+
+  int get_timeout() { return _timeout; }
+
+  void set_timeout(int tout) { _timeout = tout; }
+
+  const char* get_prefix() const { return _output_prefix; }
+
+  bool get_comp_format() { return _comp_fmt; }
+
+  void set_comp_format() { _comp_fmt = true; _output_prefix = "c "; }
+
+  void unset_comp_format() { _comp_fmt = false; _output_prefix = ""; }
+
+  bool get_stats() { return _stats; }
+
+  void set_stats() { _stats = true; }
+
+  void unset_stats() { _stats = false; }
+
+  bool get_run_enum_mode() { return _enum_mode; }
+
+  void set_run_enum_mode() { set_run_mode(true, false); }
+
+  void unset_run_enum_mode() { set_run_mode(false, true); }
+
+  bool get_run_iter_mode() { return _iter_mode; }
+
+  void set_run_iter_mode() { set_run_mode(false, true); }
+
+  void unset_run_iter_mode() { set_run_mode(true, false); }
+
+  bool get_incr_iter_mode() { assert(_iter_mode); return _incr_mode; }
+
+  void set_incr_iter_mode() { _incr_mode = true; }
+
+  bool get_implication_order() {return _implication_order;}
+  void set_implication_order(bool value = true) {_implication_order = value;}
+  
+  void unset_incr_iter_mode() { _incr_mode = false; }
+
+  int get_optimize() { return _opt_level; }
+
+  void set_optimize(int optl) { _opt_level = optl; }
+
+  int get_runs_per_var() { return _runs_pvar; }
+
+  void set_runs_per_var(int nr) { _runs_pvar = nr; }
+
+  bool get_nodc_pruning() const { return _dc_pruning == DC_None; }
+
+  bool get_vldc_pruning() { return _dc_pruning == DC_VL; }
+
+  bool get_scdc_pruning() const { return _dc_pruning == DC_SC; }
+
+  void set_nodc_pruning() { _dc_pruning = DC_None; }
+
+  void set_vldc_pruning() { _dc_pruning = DC_VL; }
+
+  void set_scdc_pruning() { _dc_pruning = DC_SC; }
+
+  int get_phase() { return _phase; }
+
+  void set_phase(int nph) { _phase = nph; }
+
+  void get_cfgstr(string& cfgstr) {
+//    cfgstr += " -v ";
+//    cfgstr += convert<int>(_verbosity);
+//
+//    cfgstr += " -T ";
+//    cfgstr += convert<int>(_timeout);
+//
+//    if (!_comp_fmt)  { cfgstr += " -nocomp"; }
+//    if (_stats)      { cfgstr += " -st"; }
+//    if (_enum_mode)  { cfgstr += " -enum"; }
+//    if (_iter_mode)  { cfgstr += " -iter"; }
+//
+//    if (_iter_mode) {
+//      if (_incr_mode)  { cfgstr += " -incr"; }
+//      if (!_incr_mode) { cfgstr += " -ninc"; }
+//    }
+//
+//    if (get_nodc_pruning()) { cfgstr += " -nodc"; }
+//    if (get_vldc_pruning()) { cfgstr += " -vldc"; }
+//    if (get_scdc_pruning()) { cfgstr += " -scdc"; }
+//
+//    cfgstr += " -opt ";
+//    cfgstr += convert<int>(_opt_level);
+//
+//    cfgstr += " -run ";
+//    cfgstr += convert<int>(_runs_pvar);
+//
+//    cfgstr += " -ph ";
+//    cfgstr += convert<int>(_phase);
+  }
+
+protected:
+
+  void set_run_mode(bool en_mode, bool it_mode) {
+    assert(en_mode && !it_mode || !en_mode && it_mode);
+    _enum_mode = en_mode; _iter_mode = it_mode;
+  }
+
+protected:
+  string _cmdstr;
+
+  string _input_file_name;
+      
+  bool _self_test;
+
+  int _verbosity;
+
+  int _timeout;
+
+  const char* _output_prefix;
+
+  bool _comp_fmt;
+
+  bool _stats;
+
+  bool _enum_mode;
+
+  bool _iter_mode;
+
+  bool _incr_mode;
+    
+  bool _implication_order;
+
+  int _opt_level;
+
+  int _runs_pvar;
+
+  DCModes _dc_pruning;
+
+  int _phase;
+
+  bool _rotatable_pruning;
+};
+
+#endif /* _TOOLCONFIG_H */
+
+/*----------------------------------------------------------------------------*/

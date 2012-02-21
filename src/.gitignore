@@ -1,0 +1,10 @@
+minisat/core/depend.mk
+# Ignore autosafe/backup/temporary files 
+*.hh~
+*.cc~
+Makefile~
+# Ignore executable 
+minibones.exe
+minibones
+# Ignore objects
+*.o

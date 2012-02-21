@@ -1,0 +1,14 @@
+#!/bin/bash
+R=0
+ls ../tests/*.cnf | while read f 
+do 
+echo -n $f ' '
+../src/minibones $f 2>&1 >/dev/null ; 
+let RV=$? ; 
+if ( [ ${RV} != 10 ] && [ ${RV} != 20 ] ); 
+then echo error: $f; R=100
+else echo OK
+fi  
+done
+
+exit $R
