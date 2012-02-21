@@ -43,7 +43,7 @@ void ReadCNF::read() {
     if (*in == EOF)
       break;
     else if (*in == 'c' || *in == 'p')
-      in.skip_line();
+      skipLine(in);
     else {
       literals.clear();
       read_cnf_clause(literals);

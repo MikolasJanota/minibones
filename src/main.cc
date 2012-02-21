@@ -48,18 +48,34 @@ int main(int argc, char** argv) {
   } else {
     return_value = run_worker(config, output);
   }
+  cout << "complete" << endl;
   return return_value;
+}
+
+
+Reader* make_reader(string flafile) {
+  gzFile ff=Z_NULL;
+  if (flafile.size()==1 && flafile[0]=='-') {
+    return new Reader(std::cin);
+  } else {
+    ff = gzopen(flafile.c_str(), "rb");
+    if (ff==Z_NULL) {
+      cerr << "Unable to open file: " << flafile << endl;
+      exit(100);
+    }
+    return new Reader(ff);
+  }
+  assert(0);
+  return NULL;
 }
 
 
 int run_upper_bound(ToolConfig& config, ostream& output) {
   //read input
-  bool read_standard = config.get_input_file_name()=="-";  
-  ifstream inpf;
-  if (!read_standard) inpf.open(config.get_input_file_name().c_str(), ifstream::in);
-  Reader r(read_standard ? cin : inpf);
-  ReadCNF reader(r);
+  Reader* fr = make_reader(config.get_input_file_name());  
+  ReadCNF reader(*fr);
   reader.read();
+
   //determine which part of variables to compute backbone of
   range=Range(1,reader.get_max_id());
   output << "range: "<<range.first<<"-"<<range.second<<endl;
@@ -78,18 +94,17 @@ int run_upper_bound(ToolConfig& config, ostream& output) {
   //print results
   print_backbone(upperbound, range, config, output);
   delete pupperbound; 
+  delete fr;
   return 10;
 }
 
 
 int run_worker(ToolConfig& config, ostream& output) {
   //read input
-  bool read_standard = config.get_input_file_name()=="-";  
-  ifstream inpf;
-  if (!read_standard) inpf.open(config.get_input_file_name().c_str(), ifstream::in);
-  Reader r(read_standard ? cin : inpf);
-  ReadCNF reader(r);
+  Reader* fr = make_reader(config.get_input_file_name());  
+  ReadCNF reader(*fr);
   reader.read();
+
   //determine which part of variables to compute backbone of
   range=Range(1,reader.get_max_id());
   output << "range: "<<range.first<<"-"<<range.second<<endl;
