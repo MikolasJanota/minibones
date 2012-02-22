@@ -20,7 +20,6 @@ UpperBound::UpperBound(ToolConfig& _tool_configuration, ostream& _output,  Var _
   , lifter(clauses)
   , rotatable_computer(clauses)
 {
-  assert(variable_range.first <= 1);
 }
 
 UpperBound::~UpperBound() {}
@@ -98,6 +97,7 @@ void UpperBound::run() {
         const Lit backbone = ~literals[index];
         might_be.remove(backbone);
         must_be.add(backbone);
+        if (tool_configuration.get_backbone_insertion()) solver.addClause(backbone);
       }
     } else {
       const vec<lbool>& model = solver.model;

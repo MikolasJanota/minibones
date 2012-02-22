@@ -56,6 +56,7 @@ public:
   : _cmdstr()
   , _use_upper_bound(false)
   , _chunk_size(0)
+  , _backbone_insertion(0)
   , _self_test(false)
   , _dc_pruning(DC_None)
   , _rotatable_pruning(false)
@@ -77,6 +78,9 @@ public:
 
   int get_chunk_size() const { return _chunk_size; }
   void set_chunk_size(int chunk_size) { _chunk_size = chunk_size; }
+
+  int get_backbone_insertion() const { return _backbone_insertion; }
+  void set_backbone_insertion(int backbone_insertion) { _backbone_insertion = backbone_insertion; }
 
 
   int get_self_test() const { return _self_test; }
@@ -199,6 +203,8 @@ protected:
   bool _use_upper_bound;
 
   int _chunk_size;
+
+  int _backbone_insertion;
 
   bool _self_test;
 

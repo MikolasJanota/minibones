@@ -175,8 +175,11 @@ void print_header(ToolConfig& config) {
  bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "uc:rl")) != -1) {
+  while ((c = getopt(argc, argv, "iuc:rl")) != -1) {
     switch (c) {
+    case 'i':
+      config.set_backbone_insertion(1);
+      break;
     case 'u':
       config.set_use_upper_bound(true);
       break;
