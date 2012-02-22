@@ -30,7 +30,7 @@ Worker::Worker(ToolConfig& _tool_configuration,
 {
     assert (variable_range.first <= 1);
     assert (variable_range.first <= variable_range.second);
-    assert ((ULINT)variable_range.second<=max_id);
+    assert (variable_range.second<=max_id);
 }
 
 bool Worker::initialize() {
