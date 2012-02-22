@@ -19,8 +19,8 @@ UpperBound::UpperBound(ToolConfig& _tool_configuration, ostream& _output,  Var _
   , solver_calls(0)
   , lifter(clauses)
   , rotatable_computer(clauses)
-{
-}
+  , might_be_iterator(might_be.infinite_iterator())
+{}
 
 UpperBound::~UpperBound() {}
 
@@ -70,30 +70,22 @@ bool UpperBound::initialize() {
 void UpperBound::run() {
   vec<Lit> literals;
   vec<Lit> assumptions(1);
-  Var relaxation_variable = 0; 
-  auto might_be_iterator = might_be.infinite_iterator(); 
+  Lit relaxation_literal = lit_Undef; 
   while (might_be.size()) { 
     UPPERBOUND_DBG( might_be.print(cerr << "might be:")<< endl; );
-    if (relaxation_variable) solver.addClause(mkLit(relaxation_variable)); // relax the last chunk clause (forever)
+    if (relaxation_literal != lit_Undef) solver.addClause(relaxation_literal); // relax the last chunk clause (forever)
     // prepare new chunk clause
     literals.clear();
-    relaxation_variable = solver.newVar();      // generate new relaxation variable
-    literals.push(mkLit(relaxation_variable));  // enable the new clause to be relaxed in the future
-    const int real_chunk_size = std::min(chunk_size, (int)might_be.size()) + 1; // +1 is there for relaxation literal
-    while (literals.size() < real_chunk_size) {
-      ++might_be_iterator;
-      const Lit lit = *might_be_iterator;
-      literals.push(~lit);
-    }
+    relaxation_literal = make_chunk(literals);
     // call solver on the new chunk
     solver.addClause(literals);
-    UPPERBOUND_DBG( cerr << "ref: " << literals << endl; );
-    assumptions[0] = ~mkLit(relaxation_variable); // disallow relaxing current refinement clause
+    UPPERBOUND_DBG( cerr << "chunk clause: " << literals << endl; );
+    assumptions[0] = ~relaxation_literal; // disallow relaxing current chunk
     const bool is_sat = solver.solve(assumptions);
     // analyze solver's output
     if (!is_sat) { // complements of the literals in the chunk are backbones
       UPPERBOUND_DBG( cerr << "bb" << endl; );
-      assert(var(literals[0])==relaxation_variable);
+      assert(literals[0]==relaxation_literal);
       for (int index = 1; index < literals.size (); ++index) {
         const Lit backbone = ~literals[index];
         might_be.remove(backbone);
@@ -105,6 +97,32 @@ void UpperBound::run() {
       process_model(model);
     }
   }
+}
+
+Lit UpperBound::make_chunk(vec<Lit>& literals) {
+  const Lit relaxation_literal = mkLit(solver.newVar());      // generate new relaxation variable
+  literals.push(relaxation_literal);                          // enable the new clause to be relaxed in the future
+  const int real_chunk_size = std::min(chunk_size, (int)might_be.size()) + 1; // +1 is there for relaxation literal
+
+  if (tool_configuration.get_use_chunk_keeping()) {
+    for (Var variable = 1; variable <= max_id; ++variable) {
+      if (literals.size() >= real_chunk_size) break;
+      const Lit pl = mkLit(variable);
+      const Lit nl = ~pl;
+      const bool may_pl = might_be.get(pl);
+      const bool may_nl = might_be.get(nl);
+      assert(!may_nl || !may_pl);
+      if (may_pl) literals.push(nl);
+      if (may_nl) literals.push(pl);
+    }
+  } else {
+    while (literals.size() < real_chunk_size) {
+      ++might_be_iterator;
+      const Lit lit = *might_be_iterator;
+      literals.push(~lit);
+    }
+  }
+  return relaxation_literal;
 }
 
 void UpperBound::process_model(const vec<lbool>& model) {

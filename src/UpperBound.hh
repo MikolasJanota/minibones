@@ -27,10 +27,8 @@ namespace minibones {
     UpperBound(ToolConfig& tool_configuration, ostream& output, Var max_id, const CNF& clauses);
     virtual ~UpperBound();
   public:
-    /** Initialize the worker, returns true iff the instance is SAT. */
-    bool initialize();
-    /** Start the worker, initialize must be called first. */
-    void run();
+    bool initialize(); // initialize the worker, returns true iff the instance is SAT
+    void run();        // start the worker, initialize must be called first.
     virtual bool is_backbone(const Lit& literal) const;
   private:// initial
     const ToolConfig&   tool_configuration;
@@ -43,18 +41,22 @@ namespace minibones {
     LitBitSet           might_be; // literals that might still be backbones   
     LitBitSet           must_be;  // literals that must be backbones   
   private:// stats
-    UINT                solver_calls;  // number of solver calls, for statistical purposes
+    size_t              solver_calls;  // number of solver calls, for statistical purposes
   private:// sub-objects
     Solver              solver;
     Lifter              lifter;               // used to reduce models via lifting
     Rotatable           rotatable_computer;   // used to get rotatable variables
   private:// backbone testing
-    /** Debones everything not in the model.*/
-    void process_model(const vec<lbool>& model);
-    void process_pruned_model(const vec<lbool>& model);
-    inline bool debone(Lit literal);
+    const_infinite_LitBitSetIterator might_be_iterator; // = might_be.infinite_iterator();
+    void process_model(const vec<lbool>& model);        // calls pruning techniques and debones based of the model
+    void process_pruned_model(const vec<lbool>& model); // debones everything not in the model
+    Lit  make_chunk(vec<Lit>& literals);                // prepares a chunk and returns the relaxation literal for it
+    inline bool debone(Lit literal);                    // mark a literal as not a backbone
   };
 
-  inline bool UpperBound::debone(Lit literal) { return might_be.remove (literal); }
+  inline bool UpperBound::debone(Lit literal) { 
+    assert(!must_be.get(literal));
+    return might_be.remove(literal);
+  }
 } /* end of namespace minibones */
 #endif /* UPPERBOUND_HH_28341 */

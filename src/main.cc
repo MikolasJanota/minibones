@@ -175,7 +175,7 @@ void print_header(ToolConfig& config) {
  bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "iuc:rl")) != -1) {
+  while ((c = getopt(argc, argv, "ikuc:rl")) != -1) {
     switch (c) {
     case 'i':
       config.set_backbone_insertion(1);
@@ -185,6 +185,9 @@ void print_header(ToolConfig& config) {
       break;
     case 'r':
       config.set_rotatable_pruning(true);
+      break;
+    case 'k':
+      config.set_use_chunk_keeping(1);
       break;
     case 'c':
       config.set_chunk_size(atoi(optarg));
