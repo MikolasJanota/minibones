@@ -93,7 +93,8 @@ void UpperBound::run() {
     // analyze solver's output
     if (!is_sat) { // complements of the literals in the chunk are backbones
       UPPERBOUND_DBG( cerr << "bb" << endl; );
-      for (int index = 0; index < literals.size (); ++index) {
+      assert(var(literals[0])==relaxation_variable);
+      for (int index = 1; index < literals.size (); ++index) {
         const Lit backbone = ~literals[index];
         might_be.remove(backbone);
         must_be.add(backbone);
