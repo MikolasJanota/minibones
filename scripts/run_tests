@@ -1,13 +1,13 @@
 #!/bin/bash
 
 PATH=${PATH}:.
-PS="-l -r -u -ul -ur" 
+PS="-l -r -u -ul -ur -uc3 -urc3" 
 
 ST=${RANDOM}
 
 #echo '../tests/r3_50_200_1.cnf'  | while read f 
 FAIL=false
-ls ../tests/*.cnf | while read f 
+ls -rS ../tests/*.cnf | while read f 
 do 
   N=`basename ${f}`
   echo $N
