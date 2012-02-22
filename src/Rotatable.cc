@@ -13,7 +13,7 @@ Rotatable::Rotatable(const CNF& _input_cnf)
 
 void Rotatable::get_rotatables(const vec<lbool>& model, VarSet& rotatables) {
   // first assume everything is rotatable
-  for (Var index = 0; index < model.size(); ++index) rotatables.add(index);
+  for (Var index = 1; index < model.size(); ++index) rotatables.add(index);
 
   // remove unit literals from rotatables
   FOR_EACH (ci, input_cnf) {

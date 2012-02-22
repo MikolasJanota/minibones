@@ -54,6 +54,8 @@ public:
 
   ToolConfig()
   : _cmdstr()
+  , _use_upper_bound(false)
+  , _chunk_size(0)
   , _self_test(false)
   , _dc_pruning(DC_None)
   , _rotatable_pruning(false)
@@ -72,6 +74,9 @@ public:
 
   int get_use_upper_bound() const { return _use_upper_bound; }
   void set_use_upper_bound(bool value = true) { _use_upper_bound = value; }
+
+  int get_chunk_size() const { return _chunk_size; }
+  void set_chunk_size(int chunk_size) { _chunk_size = chunk_size; }
 
 
   int get_self_test() const { return _self_test; }
@@ -192,6 +197,8 @@ protected:
   string _input_file_name;
       
   bool _use_upper_bound;
+
+  int _chunk_size;
 
   bool _self_test;
 

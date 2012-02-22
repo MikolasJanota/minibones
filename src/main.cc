@@ -175,7 +175,7 @@ void print_header(ToolConfig& config) {
  bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "url")) != -1) {
+  while ((c = getopt(argc, argv, "uc:rl")) != -1) {
     switch (c) {
     case 'u':
       config.set_use_upper_bound(true);
@@ -183,11 +183,14 @@ void print_header(ToolConfig& config) {
     case 'r':
       config.set_rotatable_pruning(true);
       break;
+    case 'c':
+      config.set_chunk_size(atoi(optarg));
+      break;
     case 'l':
       config.set_scdc_pruning();
       break;
     case '?':
-      if (optopt == '?')
+      if (optopt == 'c')
         fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (isprint(optopt)) fprintf (stderr, "Unknown option `-%c'.\n", optopt);
       else fprintf (stderr,"Unknown option character `\\x%x'.\n",optopt);

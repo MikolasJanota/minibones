@@ -14,3 +14,9 @@ ostream& LitBitSet::print(ostream& out) {
   }
   return out;
 }
+
+const_infinite_LitBitSetIterator::const_infinite_LitBitSetIterator(const LitBitSet& ls, size_t x) : ls(ls), i(x) {
+  if (!ls.size()) return;
+  while (i<2 || !ls.get(index2literal(i))) i=(i+1) % ls.physical_size();
+  assert (ls.get(index2literal(i)));
+}

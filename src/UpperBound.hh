@@ -34,12 +34,14 @@ namespace minibones {
     virtual bool is_backbone(const Lit& literal) const;
   private:// initial
     const ToolConfig&   tool_configuration;
+    int                 chunk_size;
     ostream&            output;
     const Var           max_id;
     const CNF&          clauses;
     const Range         variable_range;
   private:// state
     LitBitSet           might_be; // literals that might still be backbones   
+    LitBitSet           must_be;  // literals that must be backbones   
   private:// stats
     UINT                solver_calls;  // number of solver calls, for statistical purposes
   private:// sub-objects
