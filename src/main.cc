@@ -21,6 +21,7 @@ using std::cin;
 using std::setprecision;
 using namespace minibones;
 
+bool            print_help=false; 
 ofstream        output_file;
 ToolConfig      config;
 Worker          *pworker=NULL;
@@ -29,6 +30,7 @@ UpperBoundProg  *pupperbound_prog=NULL;
 Range           range;
 bool            instance_sat = false;
 
+void print_usage();
 void print_header(ToolConfig& config);
 bool parse_options(int argc, char** argv, /*out*/ToolConfig& config);
 void print_backbone(const BackboneInformation& worker, const Range& range, ToolConfig& config, ostream& output);
@@ -39,7 +41,11 @@ void register_sig_handlers();
 
 int main(int argc, char** argv) {
   register_sig_handlers();
-  if (!parse_options(argc, argv, config)) return -1;
+  if (!parse_options(argc, argv, config) || print_help) {
+     print_usage();
+     return -1;
+  }
+
   print_header(config);
   ostream& output=std::cout;
   int return_value;
@@ -197,9 +203,6 @@ void print_header(ToolConfig& config) {
   cout_pref<<"*** "<<toolname<<": a backbone tool ***" << endl;
   cout_pref<<"*** release date: "<<release_date<<" ***"<<endl;
   cout_pref<<"*** release ref: "<<changeset<<" ***"<<endl;
-#ifdef XPMODE
-  cout_pref<<"*** changeset: "<<changeset<<" ***"<<endl;
-#endif
   cout_pref<<"*** built: "<<build_date<<" ***"<<endl;
   cout_pref<<"*** author: "<<authorname<<" (" << authoremail << ") ***"<<endl;
   cout_pref<<"*** contributors: "<<contribs<<" ***"<<endl;
@@ -217,8 +220,11 @@ void print_header(ToolConfig& config) {
  bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "ikpuc:rl")) != -1) {
+  while ((c = getopt(argc, argv, "hikmpuc:rl")) != -1) {
     switch (c) {
+    case 'h':
+      print_help=true;
+      break;
     case 'i':
       config.set_backbone_insertion(1);
       break;
@@ -233,6 +239,9 @@ void print_header(ToolConfig& config) {
       break;
     case 'k':
       config.set_use_chunk_keeping(1);
+      break;
+    case 'm':
+      config.set_use_random_chunks(1);
       break;
     case 'c':
       config.set_chunk_size(atoi(optarg));
@@ -333,3 +342,18 @@ static void finishup() {
   //  if (pworker) delete pworker;
   exit(instance_sat? 10 : 20);
 }
+
+
+void print_usage() {
+  cout << "USAGE"<<"\tminibones [file name]"<<endl;
+  cout<<"    -l ... lifting"<<endl;
+  cout<<"    -r ... rotatable variables"<<endl;
+  cout<<"    -u ... upper bound"<<endl;
+  cout<<"    -c S ... chunk of size S (requires -u)"<<endl;
+  cout<<"    -m ... rando*m* content of  chunks(requires -u)"<<endl;
+  cout<<"    -i ... insertion of the backbone in to the formula after it has been found (this is default in lower bound)"<<endl;
+  cout<<"    -k ... which *k*eeps a literal in the chunk until it is decided whether it is  a backbone or not (requires -u)."<<endl;
+  cout<<"    -p ... programming chunks (one big clause is programmed to represent different chunks)"<<endl;
+}
+
+
