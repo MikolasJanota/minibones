@@ -50,5 +50,15 @@ inline Lit index2literal(size_t l) {
   const Var  variable = l>>1;
   return positive ? mkLit(variable) : ~mkLit(variable);
 }
+
+class Lit_equal {
+public:
+  inline bool operator () (const Lit& l1,const Lit& l2) const { return l1==l2; }
+};
+
+class Lit_hash {
+public:
+  inline size_t operator () (const Lit& l) const { return Minisat::toInt(l); }
+};
 #endif	/* MINISAT_AUX_HH */
 

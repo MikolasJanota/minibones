@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <time.h> 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <iosfwd>
 #include <sstream>
@@ -14,14 +15,17 @@
 #include "BackboneInformation.hh"
 #include "Worker.hh"
 #include "UpperBound.hh"
+#include "UpperBoundProg.hh"
 using std::cout;
 using std::cin;
+using std::setprecision;
 using namespace minibones;
 
 ofstream        output_file;
 ToolConfig      config;
 Worker          *pworker=NULL;
 UpperBound      *pupperbound=NULL;
+UpperBoundProg  *pupperbound_prog=NULL;
 Range           range;
 bool            instance_sat = false;
 
@@ -30,6 +34,7 @@ bool parse_options(int argc, char** argv, /*out*/ToolConfig& config);
 void print_backbone(const BackboneInformation& worker, const Range& range, ToolConfig& config, ostream& output);
 int  run_worker(ToolConfig& config, ostream& output);
 int run_upper_bound(ToolConfig& config, ostream& output);
+int run_upper_bound_prog(ToolConfig& config, ostream& output);
 void register_sig_handlers();
 
 int main(int argc, char** argv) {
@@ -45,10 +50,12 @@ int main(int argc, char** argv) {
     return_value = tests_okay ? 0 : 20;
   } else if (config.get_use_upper_bound()) {
     return_value = run_upper_bound(config, output);
+  } else if (config.get_use_upper_bound_prog()) {
+    return_value = run_upper_bound_prog(config, output);
   } else {
     return_value = run_worker(config, output);
   }
-  cout << "complete" << endl;
+  cout << "i complete" << endl;
   return return_value;
 }
 
@@ -68,7 +75,6 @@ Reader* make_reader(string flafile) {
   assert(0);
   return NULL;
 }
-
 
 int run_upper_bound(ToolConfig& config, ostream& output) {
   //read input
@@ -91,12 +97,48 @@ int run_upper_bound(ToolConfig& config, ostream& output) {
   //run upperbound
   upperbound.run();
   config.prefix(output) << "computation completed " << endl;
+  cout << "i sc:" << upperbound.get_solver_calls() << endl;
+  cout << "i st:" << upperbound.get_solver_time() << endl;
+  cout << "i ast:" << setprecision(2) << (upperbound.get_solver_time()/(double)upperbound.get_solver_calls()) << endl;
   //print results
   print_backbone(upperbound, range, config, output);
   delete pupperbound; 
   delete fr;
   return 10;
 }
+
+int run_upper_bound_prog(ToolConfig& config, ostream& output) {
+  //read input
+  Reader* fr = make_reader(config.get_input_file_name());  
+  ReadCNF reader(*fr);
+  reader.read();
+
+  //determine which part of variables to compute backbone of
+  range=Range(1,reader.get_max_id());
+  output << "i range: "<<range.first<<"-"<<range.second<<endl;
+  pupperbound_prog = new UpperBoundProg(config, output, reader.get_max_id(), reader.get_clause_vector());
+  UpperBoundProg& upperbound_prog=*pupperbound_prog;
+  if (!upperbound_prog.initialize()) {//unsatisfiable
+    config.prefix(output) << "instance unsatisfiable" << endl;
+    output << "s 0" << endl;
+    delete pupperbound_prog; 
+    return 20;
+  }
+  instance_sat = true;
+  //run upperbound
+  upperbound_prog.run();
+  config.prefix(output) << "computation completed " << endl;
+  cout << "i sc:" << upperbound_prog.get_solver_calls() << endl;
+  cout << "i st:" << upperbound_prog.get_solver_time() << endl;
+  cout << "i ast:" << setprecision(2) << (upperbound_prog.get_solver_time()/(double)upperbound_prog.get_solver_calls()) << endl;
+  //print results
+  print_backbone(upperbound_prog, range, config, output);
+  delete pupperbound_prog; 
+  delete fr;
+  return 10;
+}
+
+
 
 
 int run_worker(ToolConfig& config, ostream& output) {
@@ -141,7 +183,7 @@ void print_backbone(const BackboneInformation& worker, const Range& range, ToolC
   const float percentage = 100.0 * (float)counter / (float)(range.second - range.first + 1);
   config.prefix(output) << "backbone size: "
                         << counter << " "
-                        << percentage << "% of range"
+                        << setprecision(2) << percentage << "% of range"
                         << endl;
 }
 
@@ -175,10 +217,13 @@ void print_header(ToolConfig& config) {
  bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "ikuc:rl")) != -1) {
+  while ((c = getopt(argc, argv, "ikpuc:rl")) != -1) {
     switch (c) {
     case 'i':
       config.set_backbone_insertion(1);
+      break;
+    case 'p':
+      config.set_use_upper_bound_prog(true);
       break;
     case 'u':
       config.set_use_upper_bound(true);
@@ -244,8 +289,6 @@ void print_header(ToolConfig& config, const char* fname)
   cout_pref<<endl;
 }
 
-
-#ifndef UMPI
 //jpms:bc
 /*----------------------------------------------------------------------------*\
  * Purpose: Handler for external signals, namely SIGHUP and SIGINT.
@@ -282,10 +325,11 @@ static void SIG_handler(int signum) {
 }
 
 static void finishup() {
-  if (instance_sat) print_backbone (*pworker, range, config, cout);
-  else cout << "s 0" << endl;
-  delete pworker;
+  if (instance_sat) {
+    if (pworker) print_backbone (*pworker , range, config, cout);
+    if (pupperbound) print_backbone (*pupperbound, range, config, cout);
+    if (pupperbound_prog) print_backbone (*pupperbound_prog, range, config, cout);
+  } else cout << "s 0" << endl;
+  //  if (pworker) delete pworker;
   exit(instance_sat? 10 : 20);
 }
-
-#endif /* !UMPI */

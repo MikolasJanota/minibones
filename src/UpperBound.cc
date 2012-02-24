@@ -17,9 +17,11 @@ UpperBound::UpperBound(ToolConfig& _tool_configuration, ostream& _output,  Var _
   , max_id(_max_id)
   , clauses(_clauses)
   , solver_calls(0)
+  , solver_time(0)
   , lifter(clauses)
   , rotatable_computer(clauses)
   , might_be_iterator(might_be.infinite_iterator())
+  , end_of_chunk(max_id)
 {}
 
 UpperBound::~UpperBound() {}
@@ -39,7 +41,7 @@ bool UpperBound::initialize() {
   }
 
   // get the first model
-  const bool result = solver.solve();
+  const bool result = run_solver();
   if (!result) {// the whole instance is not satisfiable
     return false;
   }
@@ -81,7 +83,7 @@ void UpperBound::run() {
     solver.addClause(literals);
     UPPERBOUND_DBG( cerr << "chunk clause: " << literals << endl; );
     assumptions[0] = ~relaxation_literal; // disallow relaxing current chunk
-    const bool is_sat = solver.solve(assumptions);
+    const bool is_sat = run_solver(assumptions);
     // analyze solver's output
     if (!is_sat) { // complements of the literals in the chunk are backbones
       UPPERBOUND_DBG( cerr << "bb" << endl; );
@@ -105,7 +107,8 @@ Lit UpperBound::make_chunk(vec<Lit>& literals) {
   const int real_chunk_size = std::min(chunk_size, (int)might_be.size()) + 1; // +1 is there for relaxation literal
 
   if (tool_configuration.get_use_chunk_keeping()) {
-    for (Var variable = 1; variable <= max_id; ++variable) {
+    Var variable;
+    for (variable=1; variable <= end_of_chunk; ++variable) {
       if (literals.size() >= real_chunk_size) break;
       const Lit pl = mkLit(variable);
       const Lit nl = ~pl;
@@ -114,7 +117,9 @@ Lit UpperBound::make_chunk(vec<Lit>& literals) {
       assert(!may_nl || !may_pl);
       if (may_pl) literals.push(nl);
       if (may_nl) literals.push(pl);
+      if ( (1==literals.size()) && (end_of_chunk==variable) ) end_of_chunk=max_id;
     }
+    end_of_chunk=variable;
   } else {
     while (literals.size() < real_chunk_size) {
       ++might_be_iterator;
@@ -161,6 +166,19 @@ void UpperBound::process_pruned_model(const vec<lbool>& model) {
     might_be.remove( pos_lit);
     might_be.remove(~pos_lit);
   }
+}
+
+bool UpperBound::run_solver(const vec<Lit>& assumptions) {
+  const auto t0 = read_cpu_time();
+  const bool retv = solver.solve(assumptions);
+  const auto t1 = read_cpu_time();
+  solver_time+=(t1-t0);
+  ++solver_calls;
+  return retv;
+}
+bool UpperBound::run_solver() {
+  const vec<Lit> assumptions;
+  return run_solver(assumptions);
 }
 
 /*-----------------------------  getters -------------------------------------*/

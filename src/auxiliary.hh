@@ -7,6 +7,8 @@
 
 #ifndef AUXILIARY_HH
 #define	AUXILIARY_HH
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <vector>
 #include <iostream>
 using std::cerr;
@@ -32,5 +34,11 @@ class IntEqual {
 public:
   inline bool operator()(LINT v1, LINT v2) const { return v1 == v2; }
 };
+
+static inline double read_cpu_time() {
+  struct rusage ru; 
+  getrusage(RUSAGE_SELF, &ru);
+  return (double)ru.ru_utime.tv_sec + (double)ru.ru_utime.tv_usec / 1000000;
+}
 #endif	/* AUXILIARY_HH */
 

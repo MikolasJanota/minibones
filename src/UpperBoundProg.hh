@@ -1,11 +1,11 @@
 /*
- * File:  UpperBound.hh
+ * File:  UpperBoundProg.hh
  * Author:  mikolas
- * Created on:  Tue, Feb 21, 2012 3:44:59 PM
+ * Created on:  Thu Feb 23 14:04:54 WET 2012
  * Copyright (C) 2012, Mikolas Janota
  */
-#ifndef UPPERBOUND_HH_28341
-#define UPPERBOUND_HH_28341
+#ifndef UPPERBOUNDPROG_HH_24653
+#define UPPERBOUNDPROG_HH_24653
 #include <vector>
 #include <functional>
 #include "core/Solver.h"
@@ -15,6 +15,7 @@
 #include "ToolConfig.hh"
 #include "Rotatable.hh"
 #include "BackboneInformation.hh"
+#define UPPERBOUND_DBG(t)
 namespace minibones {
   using Minisat::Solver;
   using Minisat::Var;
@@ -22,10 +23,10 @@ namespace minibones {
   using Minisat::vec;
 
   /** Class for computing backbones with the upper bound approach. */
-  class UpperBound : public BackboneInformation {
+  class UpperBoundProg : public BackboneInformation {
   public:
-    UpperBound(ToolConfig& tool_configuration, ostream& output, Var max_id, const CNF& clauses);
-    virtual ~UpperBound();
+    UpperBoundProg(ToolConfig& tool_configuration, ostream& output, Var max_id, const CNF& clauses);
+    virtual ~UpperBoundProg();
   public:
     bool initialize(); // initialize the worker, returns true iff the instance is SAT
     void run();        // start the worker, initialize must be called first.
@@ -50,19 +51,32 @@ namespace minibones {
     Lifter              lifter;               // used to reduce models via lifting
     Rotatable           rotatable_computer;   // used to get rotatable variables
   private:// backbone testing
-    const_infinite_LitBitSetIterator might_be_iterator; // = might_be.infinite_iterator();
-    Var  end_of_chunk;
-    void process_model(const vec<lbool>& model);        // calls pruning techniques and debones based of the model
-    void process_pruned_model(const vec<lbool>& model); // debones everything not in the model
-    Lit  make_chunk(vec<Lit>& literals);                // prepares a chunk and returns the relaxation literal for it
-    inline bool debone(Lit literal);                    // mark a literal as not a backbone
-    bool run_solver(const vec<Lit>& assumptions);
-    bool run_solver();
+    typedef std::unordered_map<Lit,Lit,Lit_hash, Lit_equal>              Lit2Lit;
+    Lit2Lit             lit_selectors;
+    size_t              make_chunk(const Var chunk_start, const Var chunk_end, vec<Lit>& assumptions);
+    void                process_model(const vec<lbool>& model);        // calls pruning techniques and debones based of the model
+    void                process_pruned_model(const vec<lbool>& model); // debones everything not in the model
+    inline bool         debone(Lit literal);                    // mark a literal as not a backbone
+    inline Lit          get_selector(Lit literal);
+    bool                run_solver(const vec<Lit>& assumptions);
+    bool                run_solver();
   };
 
-  inline bool UpperBound::debone(Lit literal) { 
+  inline bool UpperBoundProg::debone(Lit literal) { 
     assert(!must_be.get(literal));
-    return might_be.remove(literal);
+    const bool rr = might_be.remove(literal);
+    if (rr) {
+      solver.addClause(~get_selector(~literal));
+      UPPERBOUND_DBG( cerr << "dbcl: " << ~get_selector(~literal) << endl;);
+    }
+    return rr;
   }
+
+  inline Lit UpperBoundProg::get_selector(Lit literal) { 
+    const auto i = lit_selectors.find(literal);
+    assert(i!=lit_selectors.end());
+    return i->second;
+  }
+
 } /* end of namespace minibones */
-#endif /* UPPERBOUND_HH_28341 */
+#endif /* UPPERBOUNDPROG_HH_24653 */
