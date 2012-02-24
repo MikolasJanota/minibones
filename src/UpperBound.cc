@@ -115,6 +115,23 @@ Lit UpperBound::make_chunk(vec<Lit>& literals) {
       if (may_pl) literals.push(nl);
       if (may_nl) literals.push(pl);
     }
+  } if (tool_configuration.get_use_random_chunks()) {
+    const double probability = (double)(real_chunk_size-1) / (double)might_be.size();
+    size_t elements_left = might_be.size(); // elements still not processed in might_be
+    for (Var variable = 1; variable <= max_id; ++variable) {
+      const size_t still_needed = real_chunk_size - literals.size(); // how many literals I still need
+      if (!still_needed) break;
+      const Lit pl = mkLit(variable);
+      const Lit nl = ~pl;
+      const bool may_pl = might_be.get(pl);
+      const bool may_nl = might_be.get(nl);
+      assert(!may_nl || !may_pl);
+      if (!may_nl && !may_pl) continue; // no literal for this variable
+      const bool should_add = (elements_left<=still_needed) || ((rand()/double(RAND_MAX))<probability);
+      if (should_add && may_pl) literals.push(nl);
+      if (should_add && may_nl) literals.push(pl);
+      --elements_left;
+    }
   } else {
     while (literals.size() < real_chunk_size) {
       ++might_be_iterator;

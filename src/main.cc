@@ -155,9 +155,6 @@ void print_header(ToolConfig& config) {
   cout_pref<<"*** "<<toolname<<": a backbone tool ***" << endl;
   cout_pref<<"*** release date: "<<release_date<<" ***"<<endl;
   cout_pref<<"*** release ref: "<<changeset<<" ***"<<endl;
-#ifdef XPMODE
-  cout_pref<<"*** changeset: "<<changeset<<" ***"<<endl;
-#endif
   cout_pref<<"*** built: "<<build_date<<" ***"<<endl;
   cout_pref<<"*** author: "<<authorname<<" (" << authoremail << ") ***"<<endl;
   cout_pref<<"*** contributors: "<<contribs<<" ***"<<endl;
@@ -175,7 +172,7 @@ void print_header(ToolConfig& config) {
  bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "ikuc:rl")) != -1) {
+  while ((c = getopt(argc, argv, "ikmuc:rl")) != -1) {
     switch (c) {
     case 'i':
       config.set_backbone_insertion(1);
@@ -188,6 +185,9 @@ void print_header(ToolConfig& config) {
       break;
     case 'k':
       config.set_use_chunk_keeping(1);
+      break;
+    case 'm':
+      config.set_use_random_chunks(1);
       break;
     case 'c':
       config.set_chunk_size(atoi(optarg));

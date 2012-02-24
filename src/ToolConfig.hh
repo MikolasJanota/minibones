@@ -57,6 +57,7 @@ public:
   , _use_upper_bound(false)
   , _chunk_size(0)
   , _use_chunk_keeping(0)
+  , _use_random_chunks(0)
   , _backbone_insertion(0)
   , _self_test(false)
   , _dc_pruning(DC_None)
@@ -79,6 +80,9 @@ public:
 
   int get_use_chunk_keeping() const { return _use_chunk_keeping; }
   void set_use_chunk_keeping(int value) { _use_chunk_keeping = value; }
+
+  int get_use_random_chunks() const { return _use_random_chunks; }
+  void set_use_random_chunks(int value) { _use_random_chunks = value; }
 
 
   int get_chunk_size() const { return _chunk_size; }
@@ -210,6 +214,8 @@ protected:
   int _chunk_size;
 
   int _use_chunk_keeping;
+
+  int _use_random_chunks;
 
   int _backbone_insertion;
 
