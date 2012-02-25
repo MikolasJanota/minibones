@@ -220,7 +220,7 @@ void print_header(ToolConfig& config) {
  bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "hikmpuc:rl")) != -1) {
+  while ((c = getopt(argc, argv, "bhikmpuc:rl")) != -1) {
     switch (c) {
     case 'h':
       print_help=true;
@@ -350,6 +350,7 @@ static void finishup() {
 void print_usage() {
   cout << "USAGE"<<"\tminibones [file name]"<<endl;
   cout<<"    -l ... lifting"<<endl;
+  cout<<"    -b ... variable bumping"<<endl;
   cout<<"    -r ... rotatable variables"<<endl;
   cout<<"    -u ... upper bound"<<endl;
   cout<<"    -c S ... chunk of size S (requires -u)"<<endl;
