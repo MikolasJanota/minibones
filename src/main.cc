@@ -237,6 +237,9 @@ void print_header(ToolConfig& config) {
     case 'r':
       config.set_rotatable_pruning(true);
       break;
+    case 'b':
+      config.set_use_variable_bumping(1);
+      break;
     case 'k':
       config.set_use_chunk_keeping(1);
       break;

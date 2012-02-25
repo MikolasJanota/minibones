@@ -57,6 +57,7 @@ public:
   , _use_upper_bound_prog(false)
   , _use_upper_bound(false)
   , _chunk_size(0)
+  , _use_variable_bumping(0)
   , _use_chunk_keeping(0)
   , _use_random_chunks(0)
   , _backbone_insertion(0)
@@ -82,6 +83,8 @@ public:
   int get_use_upper_bound_prog() const { return _use_upper_bound_prog; }
   void set_use_upper_bound_prog(bool value = true) { _use_upper_bound_prog = value; }
 
+  int get_use_variable_bumping() const { return _use_variable_bumping; }
+  void set_use_variable_bumping(int value) { _use_variable_bumping = value; }
 
   int get_use_chunk_keeping() const { return _use_chunk_keeping; }
   void set_use_chunk_keeping(int value) { _use_chunk_keeping = value; }
@@ -219,6 +222,8 @@ protected:
   bool _use_upper_bound;
 
   int _chunk_size;
+
+  int _use_variable_bumping;
 
   int _use_chunk_keeping;
 

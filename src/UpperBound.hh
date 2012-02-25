@@ -8,7 +8,7 @@
 #define UPPERBOUND_HH_28341
 #include <vector>
 #include <functional>
-#include "core/Solver.h"
+#include "MiniSatExt.hh"
 #include "auxiliary.hh"
 #include "Lifter.hh"
 #include "LitBitSet.hh"
@@ -16,7 +16,7 @@
 #include "Rotatable.hh"
 #include "BackboneInformation.hh"
 namespace minibones {
-  using Minisat::Solver;
+  using Minisat::MiniSatExt;
   using Minisat::Var;
   using Minisat::Lit;
   using Minisat::vec;
@@ -46,7 +46,7 @@ namespace minibones {
     size_t              solver_calls;  // number of solver calls, for statistical purposes
     double              solver_time;   // for statistical purposes
   private:// sub-objects
-    Solver              solver;
+    MiniSatExt          solver;
     Lifter              lifter;               // used to reduce models via lifting
     Rotatable           rotatable_computer;   // used to get rotatable variables
   private:// backbone testing

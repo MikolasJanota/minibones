@@ -81,6 +81,15 @@ void UpperBound::run() {
     relaxation_literal = make_chunk(literals);
     // call solver on the new chunk
     solver.addClause(literals);
+    if (tool_configuration.get_use_variable_bumping()) {
+      for (int i=0; i<literals.size(); ++i) {
+        const Lit l=literals[i];
+        if (l==relaxation_literal) continue;
+        const Var v=var(literals[i]);
+        solver.bump(v);
+        solver.setPolarity(v, sign(l));
+      }
+    }
     UPPERBOUND_DBG( cerr << "chunk clause: " << literals << endl; );
     assumptions[0] = ~relaxation_literal; // disallow relaxing current chunk
     const bool is_sat = run_solver(assumptions);
