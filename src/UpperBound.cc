@@ -122,6 +122,7 @@ Lit UpperBound::make_chunk(vec<Lit>& literals) {
     end_of_chunk=variable;
   } if (tool_configuration.get_use_random_chunks()) {
     const double probability = (double)(real_chunk_size-1) / (double)might_be.size();
+    const bool add_all = (size_t)chunk_size>=might_be.size();
     for (Var variable = 1; variable <= max_id; ++variable) {
       if (real_chunk_size<=literals.size()) break;
       const Lit pl = mkLit(variable);
@@ -131,7 +132,7 @@ Lit UpperBound::make_chunk(vec<Lit>& literals) {
       assert(!may_nl || !may_pl);
       if (!may_nl && !may_pl) continue; // no literal for this variable
       const double coin = (double)rand()/(double)RAND_MAX;
-      const bool should_add = coin<probability;
+      const bool should_add = add_all || (coin<probability);
       if (should_add && may_pl) literals.push(nl);
       if (should_add && may_nl) literals.push(pl);
     }
