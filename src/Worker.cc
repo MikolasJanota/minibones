@@ -23,6 +23,7 @@ Worker::Worker(ToolConfig& _tool_configuration,
 , max_id(_max_id)
 , clauses(_clauses)
 , variable_range(_variable_range)
+, solver_time(0)
 , solver_calls(0)
 , bbInfo(max_id)
 , lifter(clauses)
@@ -51,7 +52,7 @@ bool Worker::initialize() {
   }
 
   // get the first model
-  const bool result = solver.solve();
+  const bool result = run_solver();
   if (!result) {// the whole instance is not satisfiable
     return false;
   }
@@ -86,8 +87,7 @@ bool Worker::test_backbone(const Lit& literal) {
   // call the solver
   vec<Lit> assumptions(1);
   assumptions[0]=~literal;
-  const bool sat = solver.solve(assumptions);
-  ++solver_calls;
+  const bool sat = run_solver(assumptions);
   // analyze solver's result
   VarSet pruned;
 
@@ -145,6 +145,21 @@ bool Worker::is_complete() const {
   }
   return true;
 }
+
+
+bool Worker::run_solver(const vec<Lit>& assumptions) {
+  const auto t0 = read_cpu_time();
+  const bool retv = solver.solve(assumptions);
+  const auto t1 = read_cpu_time();
+  solver_time+=(t1-t0);
+  ++solver_calls;
+  return retv;
+}
+bool Worker::run_solver() {
+  const vec<Lit> assumptions;
+  return run_solver(assumptions);
+}
+
 
 /*----------------------------  dummy ----------------------------------------*/
 //Worker::Worker(const Worker& orig)

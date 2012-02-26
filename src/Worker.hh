@@ -45,6 +45,8 @@ namespace minibones {
     /**Start the worker, Run only after  {@code initialize} is called */
     void run();
     virtual bool is_backbone(const Lit& literal) const;
+    size_t  get_solver_time() const  { return solver_time; }
+    size_t  get_solver_calls() const { return solver_calls; }
   private:// initial
     const ToolConfig&   tool_configuration;
     ostream&            output;
@@ -52,6 +54,7 @@ namespace minibones {
     const CNF&          clauses;
     const Range&        variable_range;
   private:// state
+    double       solver_time;   // for statistical purposes
     UINT         solver_calls;  // number of solver calls, for statistical purposes
     vector<bool> to_test;       // to be tested whether they are backbones or not
     UINT         to_test_count; // number of literals still to be tested
@@ -69,6 +72,8 @@ namespace minibones {
     void process_model(const vec<lbool>& model);
     inline bool debone(const Lit& literal);
     inline bool mark_bone(const Lit& literal);
+    bool run_solver(const vec<Lit>& assumptions);
+    bool run_solver();
   private:// running
     bool should_stop() const;
   private:// debugging

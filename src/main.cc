@@ -168,6 +168,9 @@ int run_worker(ToolConfig& config, ostream& output) {
   //run worker
   worker.run();
   config.prefix(output) << "computation completed " << endl;
+  cout << "i sc:" << worker.get_solver_calls() << endl;
+  cout << "i st:" << worker.get_solver_time() << endl;
+  cout << "i ast:" << setprecision(2) << (worker.get_solver_time()/(double)worker.get_solver_calls()) << endl;
   //print results
   print_backbone(worker, range, config, output);
   delete pworker; 
