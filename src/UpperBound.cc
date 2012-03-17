@@ -20,6 +20,7 @@ UpperBound::UpperBound(ToolConfig& _tool_configuration, ostream& _output,  Var _
   , solver_time(0)
   , lifter(clauses)
   , rotatable_computer(clauses)
+  , cores(_tool_configuration,_max_id,_clauses)
   , might_be_iterator(might_be.infinite_iterator())
   , end_of_chunk(max_id)
 {}
@@ -144,6 +145,25 @@ Lit UpperBound::make_chunk(vec<Lit>& literals) {
       const bool should_add = add_all || (coin<probability);
       if (should_add && may_pl) literals.push(nl);
       if (should_add && may_nl) literals.push(pl);
+    }
+  } if (tool_configuration.get_use_cores())  {
+    while (true) {
+      vec<Lit> reasons;
+      const bool flipped = cores.try_to_flip(might_be, reasons);
+      if (flipped) { // no more backbones
+        might_be.clear();
+        break;
+      }
+      assert(reasons.size());
+      if (reasons.size()==1) {
+        const Lit backbone = ~reasons[0];
+        assert(might_be.get(backbone));
+        might_be.remove(backbone);
+        must_be.add(backbone);
+      } else {
+        for (int i=0; i<reasons.size(); ++i) literals.push(~reasons[i]);
+        break;
+      }
     }
   } else {
     while (literals.size() < real_chunk_size) {

@@ -223,13 +223,16 @@ void print_header(ToolConfig& config) {
  bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "bhikmpuc:rl")) != -1) {
+  while ((c = getopt(argc, argv, "obhikmpuc:rl")) != -1) {
     switch (c) {
     case 'h':
       print_help=true;
       break;
     case 'i':
       config.set_backbone_insertion(1);
+      break;
+    case 'o':
+      config.set_use_cores(true);
       break;
     case 'p':
       config.set_use_upper_bound_prog(true);

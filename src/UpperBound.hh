@@ -15,6 +15,7 @@
 #include "ToolConfig.hh"
 #include "Rotatable.hh"
 #include "BackboneInformation.hh"
+#include "Cores.hh"
 namespace minibones {
   using Minisat::MiniSatExt;
   using Minisat::Var;
@@ -49,6 +50,7 @@ namespace minibones {
     MiniSatExt          solver;
     Lifter              lifter;               // used to reduce models via lifting
     Rotatable           rotatable_computer;   // used to get rotatable variables
+    Cores           cores;   // used to get rotatable variables
   private:// backbone testing
     const_infinite_LitBitSetIterator might_be_iterator; // = might_be.infinite_iterator();
     Var  end_of_chunk;

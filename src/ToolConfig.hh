@@ -54,6 +54,7 @@ public:
 
   ToolConfig()
   : _cmdstr()
+  , _use_cores(false)
   , _use_upper_bound_prog(false)
   , _use_upper_bound(false)
   , _chunk_size(0)
@@ -79,6 +80,9 @@ public:
 
   int get_use_upper_bound() const { return _use_upper_bound; }
   void set_use_upper_bound(bool value = true) { _use_upper_bound = value; }
+
+  int get_use_cores() const { return _use_cores; }
+  void set_use_cores(bool value = true) { _use_cores = value; }
 
   int get_use_upper_bound_prog() const { return _use_upper_bound_prog; }
   void set_use_upper_bound_prog(bool value = true) { _use_upper_bound_prog = value; }
@@ -216,6 +220,8 @@ protected:
   string _cmdstr;
 
   string _input_file_name;
+
+  bool _use_cores;
 
   bool _use_upper_bound_prog;
       

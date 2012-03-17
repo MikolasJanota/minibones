@@ -35,7 +35,7 @@ public:
   inline void                      clear();
   size_t                           size() const {return _size;}
   ostream&                         print(ostream& out);
-  const_infinite_LitBitSetIterator infinite_iterator() {return const_infinite_LitBitSetIterator(*this, 0);}
+  const_infinite_LitBitSetIterator infinite_iterator() const {return const_infinite_LitBitSetIterator(*this, 0);}
   size_t                           physical_size () const {return set.size();}
 private:
   size_t         _size;
