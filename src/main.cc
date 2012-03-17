@@ -266,11 +266,12 @@ void print_header(ToolConfig& config) {
     }
   }
 
-  if (optind >= argc) {
-    config.set_self_test(true);
+  if (!print_help && (optind >= argc)) {
+     cerr << "ERROR: file name expected" << endl;
+     return false;
   } else {
     config.set_self_test(false);
-    config.set_input_file_name(argv[optind]);
+    if(!print_help) config.set_input_file_name(argv[optind]);
   }
   return true;
 }
@@ -361,6 +362,8 @@ void print_usage() {
   cout<<"    -i ... insertion of the backbone in to the formula after it has been found (this is default in lower bound)"<<endl;
   cout<<"    -k ... which *k*eeps a literal in the chunk until it is decided whether it is  a backbone or not (requires -u)."<<endl;
   cout<<"    -p ... programming chunks (one big clause is programmed to represent different chunks)"<<endl;
+  cout << "NOTES:"<<endl;
+  cout <<"   if filename is '-', instance is read from the standard input" << endl;
 }
 
 
