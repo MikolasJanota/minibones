@@ -38,9 +38,11 @@ bool Cores::try_to_flip(const LitBitSet& might_be, vec<Lit>& reasons) {
     assumptions[i] = ~l;
     ++it;
   }
+  cerr << "assumptions: " << assumptions << endl;
   const bool satisfiable = solver.solve(assumptions);
   reasons.clear();
   if (satisfiable) return true;
+  cerr << "core: " << solver.conflict << endl;
   solver.conflict.copyTo(reasons);
   return false;
 }

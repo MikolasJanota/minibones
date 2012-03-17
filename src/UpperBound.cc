@@ -7,7 +7,7 @@
 #include "UpperBound.hh"
 using namespace minibones; 
 
-#define UPPERBOUND_DBG(t)
+#define UPPERBOUND_DBG(t) t
 
 /*------------------------- initialization -----------------------------------*/
 UpperBound::UpperBound(ToolConfig& _tool_configuration, ostream& _output,  Var _max_id, const CNF& _clauses)
@@ -156,7 +156,7 @@ Lit UpperBound::make_chunk(vec<Lit>& literals) {
       }
       assert(reasons.size());
       if (reasons.size()==1) {
-        const Lit backbone = ~reasons[0];
+        const Lit backbone = reasons[0];
         assert(might_be.get(backbone));
         might_be.remove(backbone);
         must_be.add(backbone);
