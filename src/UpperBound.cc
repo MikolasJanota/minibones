@@ -7,7 +7,7 @@
 #include "UpperBound.hh"
 using namespace minibones; 
 
-#define UPPERBOUND_DBG(t) t
+#define UPPERBOUND_DBG(t)
 
 /*------------------------- initialization -----------------------------------*/
 UpperBound::UpperBound(ToolConfig& _tool_configuration, ostream& _output,  Var _max_id, const CNF& _clauses)

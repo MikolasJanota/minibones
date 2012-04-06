@@ -16,6 +16,8 @@
 #include "Worker.hh"
 #include "UpperBound.hh"
 #include "UpperBoundProg.hh"
+#include "picosat_wrapper_incr.hh"
+
 using std::cout;
 using std::cin;
 using std::setprecision;
@@ -38,8 +40,11 @@ int  run_worker(ToolConfig& config, ostream& output);
 int run_upper_bound(ToolConfig& config, ostream& output);
 int run_upper_bound_prog(ToolConfig& config, ostream& output);
 void register_sig_handlers();
+void initialize_picosat();
 
 int main(int argc, char** argv) {
+  //initialize_picosat();
+
   register_sig_handlers();
   if (!parse_options(argc, argv, config) || print_help) {
      print_usage();
@@ -370,3 +375,13 @@ void print_usage() {
 }
 
 
+void initialize_picosat() {
+  IDManager idm;
+  PicosatWrapperIncr picosat(idm);
+  picosat.init_all();
+  picosat.init_run();
+  BasicClauseSet clauses;
+  auto c  = clauses.create_binary_clause(-1,2);
+  picosat.add_final_clause(c);
+  picosat.solve();
+}

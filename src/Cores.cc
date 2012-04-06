@@ -6,6 +6,7 @@
  */
 #include "Cores.hh"
 using namespace minibones;
+#define CORE_DBG(t)
 
 Cores::Cores(ToolConfig& _tool_configuration, Var _max_id, const CNF& _clauses)
   : tool_configuration(_tool_configuration)
@@ -38,11 +39,11 @@ bool Cores::try_to_flip(const LitBitSet& might_be, vec<Lit>& reasons) {
     assumptions[i] = ~l;
     ++it;
   }
-  cerr << "assumptions: " << assumptions << endl;
+  CORE_DBG( cerr << "assumptions: " << assumptions << endl; )
   const bool satisfiable = solver.solve(assumptions);
   reasons.clear();
   if (satisfiable) return true;
-  cerr << "core: " << solver.conflict << endl;
+  CORE_DBG( cerr << "core: " << solver.conflict << endl; )
   solver.conflict.copyTo(reasons);
   return false;
 }

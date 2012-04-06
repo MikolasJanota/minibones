@@ -32,9 +32,7 @@ endif
 
 CFLAGS += -Wall -DBUILDDATE='"$(BUILDDATE)"' -DDISTDATE='"$(DISTDATE)"'
 CFLAGS += -DCHANGESET='"$(CHANGESET)"' -DRELDATE='"$(RELDATE)"'
-CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated -D _MSC_VER
-CFLAGS+=-I./minisat/
-CFLAGS+=-I./picosat/
+CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated 
 CFLAGS+=-std=c++0x
 LIBS+=-lz
 
@@ -43,38 +41,27 @@ CFLAGS+=-static
 LNFLAGS+=-static
 endif
 
-.PHONY: m p
+.PHONY: all
 
-all:  minibones
-
-minibones:  m $(COBJS) 
-	@echo Linking: $@
-	@$(CXX)  -o $@ $(COBJS) ./picosat/*.o ./minisat/objs/*.o $(LNFLAGS) $(LIBD) $(LIBS)
-
-m: 
-	export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) objs 
-	export MROOT=`pwd`/minisat ; cd ./minisat/utils; make CXX=$(CXX) objs
-	mkdir -p minisat/objs ; cd minisat/objs ; cp ../core/*.o .; cp ../utils/*.o . ; rm Main.*
-
-p:
-	cd p ; make
+all: picosat.o $(COBJS) 
 
 depend:
 	rm -f $(DEPFILE)
 	@echo $(DEPTOKEN) > $(DEPFILE)
 	makedepend $(DEPFLAGS) -- $(CFLAGS) -- $(CSRCS)
 
+picosat.o: picosat.c
+	@echo Compiling: $@
+	gcc -c -o $@ $<
+
 ## Build rule
 %.o:	%.cc
 	@echo Compiling: $@
-	@$(CXX) $(CFLAGS) -c -o $@ $<
+	$(CXX) $(CFLAGS) -c -o $@ $<
 
 ## Clean rule
 clean:
-	@rm -f dilpaso dilpaso.exe $(COBJS)
-	@export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) clean
-	@rm -rf ./minisat/objs
-	@rm -f $(DEPFILE)
+	rm -f *.o
 
 ### Makefile ends here
 sinclude $(DEPFILE)
