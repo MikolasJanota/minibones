@@ -55,9 +55,9 @@ namespace minibones {
     const Range&        variable_range;
   private:// state
     double       solver_time;   // for statistical purposes
-    UINT         solver_calls;  // number of solver calls, for statistical purposes
+    size_t       solver_calls;  // number of solver calls, for statistical purposes
     vector<bool> to_test;       // to be tested whether they are backbones or not
-    UINT         to_test_count; // number of literals still to be tested
+    size_t       to_test_count; // number of literals still to be tested
     BBInfo       bbInfo;
   private:// sub-objects
     Solver      solver;
