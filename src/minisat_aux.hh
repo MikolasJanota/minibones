@@ -36,9 +36,6 @@ ostream& operator << (ostream& outs, Lit lit);
 ostream& print(ostream& out, const vec<Lit>& lv);
 inline ostream& operator << (ostream& out, const vec<Lit>& lv) { return print(out,lv); }
 
-/** print values of variables from the given set */
-void print(const vector<LINT>& vs);
-
 inline size_t literal_index(Lit l) { 
   assert(var(l) > 0);
   const size_t v = (size_t) var(l);
