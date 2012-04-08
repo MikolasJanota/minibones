@@ -118,7 +118,12 @@ void PicosatWrapperIncr::reset_all()
   //a2c_map.clear(); assert(a2c_map.size() == 0); 
 }
 
-SATRes PicosatWrapperIncr::solve()
+SATRes PicosatWrapperIncr::solve() {
+  const vector<LINT> assumptions;
+  return solve(assumptions);
+}
+
+SATRes PicosatWrapperIncr::solve(const vector<LINT>& assumptions)
 {
   assert(isvalid);
   NDBG(cout<<"Vars in solver:        "<<picosat_variables()<<endl;
@@ -128,6 +133,14 @@ SATRes PicosatWrapperIncr::solve()
 
   // 1. Load assumptions into picosat
   transmit_assumptions();
+
+  // hack by Mikolas ////
+  for (auto i=assumptions.begin(); i != assumptions.end(); ++i) {
+    const LINT l = *i;
+    assert(std::abs(l)<=maxvid);
+    picosat_assume(l);
+  }
+  //////////////////////
 
   // 2. Invoke SAT solver
   //prt_std_cputime("c ", "Running SAT solver ...");
@@ -141,7 +154,7 @@ SATRes PicosatWrapperIncr::solve()
 
   // 4. Analyze outcome and get relevant data
   if (status == 20) {             // Unsatisfiable
-    handle_unsat_outcome();
+    //handle_unsat_outcome();
   }
   else if (status == 10) {        // Satisfiable
     handle_sat_outcome();

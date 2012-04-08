@@ -9,13 +9,19 @@
 #define	WORKER_HH
 #include <vector>
 #include <functional>
-#include "core/Solver.h"
+
 #include "auxiliary.hh"
 #include "Lifter.hh"
 #include "BBInfo.hh"
 #include "ToolConfig.hh"
 #include "Rotatable.hh"
 #include "BackboneInformation.hh"
+#ifdef USE_PICOSAT
+#include "PicoWrap.hh"
+#else
+#include "core/Solver.h"
+#endif
+
 using Minisat::Solver;
 using Minisat::Lit;
 using Minisat::lbool;
@@ -60,7 +66,11 @@ namespace minibones {
     size_t       to_test_count; // number of literals still to be tested
     BBInfo       bbInfo;
   private:// sub-objects
+#ifdef USE_PICOSAT
+    PicoWrap    solver;
+#else
     Solver      solver;
+#endif
     Lifter      lifter;      // used to reduce models
     Rotatable   rotatable_computer;      // used to get rotatable variables
   private:// backbone testing

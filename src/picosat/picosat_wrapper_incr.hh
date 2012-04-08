@@ -36,6 +36,7 @@ public:
   void init_run();                  // Initialize data structures for SAT run
 
   SATRes solve();                   // Call SAT solver
+  SATRes solve(const vector<LINT>& assumptions);
 
   void reset_all();                 // Clean up all internal data structures
 

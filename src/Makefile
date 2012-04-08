@@ -43,6 +43,10 @@ CFLAGS+=-static
 LNFLAGS+=-static
 endif
 
+ifdef USE_PICOSAT
+CFLAGS+=-DUSE_PICOSAT
+endif
+
 .PHONY: m p
 
 all:  minibones

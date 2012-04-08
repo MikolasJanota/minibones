@@ -16,7 +16,7 @@
 #include "Worker.hh"
 #include "UpperBound.hh"
 #include "UpperBoundProg.hh"
-#include "picosat_wrapper_incr.hh"
+
 
 using std::cout;
 using std::cin;
@@ -372,16 +372,4 @@ void print_usage() {
   cout<<"    -p ... programming chunks (one big clause is programmed to represent different chunks)"<<endl;
   cout << "NOTES:"<<endl;
   cout <<"   if filename is '-', instance is read from the standard input" << endl;
-}
-
-
-void initialize_picosat() {
-  IDManager idm;
-  PicosatWrapperIncr picosat(idm);
-  picosat.init_all();
-  picosat.init_run();
-  BasicClauseSet clauses;
-  auto c  = clauses.create_binary_clause(-1,2);
-  picosat.add_final_clause(c);
-  picosat.solve();
 }
