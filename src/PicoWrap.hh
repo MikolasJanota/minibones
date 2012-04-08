@@ -8,7 +8,6 @@
 #define PICOWRAP_HH_22116
 #include "core/SolverTypes.h"
 #include "picosat_wrapper_incr.hh"
-#include "minisat_aux.hh"
 using Minisat::lbool;
 using Minisat::mkLit;
 using Minisat::sign;
