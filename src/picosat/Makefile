@@ -22,8 +22,11 @@ CFLAGS+=-O0
 CFLAGS+=-ggdb
 CFLAGS+=-DDBG
 else
+PICOFLAGS+=-O3
+PICOFLAGS+=-DNDEBUG
 CFLAGS+=-DNDEBUG
 CFLAGS+=-O3
+CFLAGS+=-DNCHECK
 endif
 
 ifdef NOO
@@ -52,7 +55,7 @@ depend:
 
 picosat.o: picosat.c
 	@echo Compiling: $@
-	gcc -c -o $@ $<
+	gcc ${PICOFLAGS}  -c -o $@ $<
 
 ## Build rule
 %.o:	%.cc

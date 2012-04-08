@@ -51,7 +51,7 @@ endif
 
 all:  minibones
 
-minibones:  m $(COBJS) 
+minibones:  m p $(COBJS) 
 	@echo Linking: $@
 	@$(CXX)  -o $@ $(COBJS) ./picosat/*.o ./minisat/objs/*.o $(LNFLAGS) $(LIBD) $(LIBS)
 
@@ -61,7 +61,7 @@ m:
 	mkdir -p minisat/objs ; cd minisat/objs ; cp ../core/*.o .; cp ../utils/*.o . ; rm Main.*
 
 p:
-	cd p ; make
+	cd picosat ; make
 
 depend:
 	rm -f $(DEPFILE)
@@ -78,6 +78,7 @@ clean:
 	@rm -f dilpaso dilpaso.exe $(COBJS)
 	@export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) clean
 	@rm -rf ./minisat/objs
+	@cd picosat ; make clean
 	@rm -f $(DEPFILE)
 
 ### Makefile ends here
