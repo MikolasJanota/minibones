@@ -20,7 +20,6 @@ endif
 ifdef DBG
 CFLAGS+=-O0
 CFLAGS+=-ggdb
-CFLAGS+=-DDBG
 else
 CFLAGS+=-DNDEBUG
 CFLAGS+=-O3

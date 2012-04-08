@@ -115,7 +115,7 @@ int PicosatWrapper::run_sat_solver()
   else if (status == 10) {    // Satisfiable
     // jpms:20090217 -> Add here code for recording computed model
     if (model.size() < maxvid+1) { model.resize(maxvid+1, 0); }
-    for(int i=1; i<=maxvid; ++i) {
+    for(size_t i=1; i<=maxvid; ++i) {
       model[i] = picosat_deref(i);
       DBG(cout << "id " << i << "=" << picosat_deref(i) << endl;);
     }

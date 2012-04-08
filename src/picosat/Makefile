@@ -20,7 +20,6 @@ endif
 ifdef DBG
 CFLAGS+=-O0
 CFLAGS+=-ggdb
-CFLAGS+=-DDBG
 else
 PICOFLAGS+=-O3
 PICOFLAGS+=-DNDEBUG
@@ -36,7 +35,7 @@ endif
 CFLAGS += -Wall -DBUILDDATE='"$(BUILDDATE)"' -DDISTDATE='"$(DISTDATE)"'
 CFLAGS += -DCHANGESET='"$(CHANGESET)"' -DRELDATE='"$(RELDATE)"'
 CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated 
-CFLAGS+=-std=c++0x
+# CFLAGS+=-std=c++0x
 LIBS+=-lz
 
 ifdef STATIC

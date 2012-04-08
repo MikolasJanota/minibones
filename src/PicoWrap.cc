@@ -18,7 +18,7 @@ PicoWrap::~PicoWrap(){
 
 Var PicoWrap::newVar() { return (Var) idm.new_id(); }
 
-bool   PicoWrap::addClause(const vec<Lit>& ps) {
+bool PicoWrap::addClause(const vec<Lit>& ps) {
   vector<LINT> temporary(ps.size());  
   for (int i=0; i<ps.size(); ++i) temporary[i] = integer(ps[i]); 
   BasicClause* const cl = temporary_clauses.create_clause(temporary);
