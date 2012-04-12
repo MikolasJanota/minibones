@@ -46,7 +46,7 @@ ifdef USE_PICOSAT
 CFLAGS+=-DUSE_PICOSAT
 endif
 
-.PHONY: m p
+.PHONY: m p t
 
 all:  minibones
 
@@ -66,6 +66,9 @@ depend:
 	rm -f $(DEPFILE)
 	@echo $(DEPTOKEN) > $(DEPFILE)
 	makedepend $(DEPFLAGS) -- $(CFLAGS) -- $(CSRCS)
+
+t:
+	bash -c './minibones ../examples/t1.cnf ; [ $$? == 10 ]'
 
 ## Build rule
 %.o:	%.cc

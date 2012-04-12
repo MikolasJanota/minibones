@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <algorithm>
 #include "ToolConfig.hh"
-//#include "tests.hh"
+#include "pico_test.hh"
 #include "ReadCNF.hh"
 #include "auxiliary.hh"
 #include "BackboneInformation.hh"
@@ -43,8 +43,6 @@ void register_sig_handlers();
 void initialize_picosat();
 
 int main(int argc, char** argv) {
-  //initialize_picosat();
-
   register_sig_handlers();
   if (!parse_options(argc, argv, config) || print_help) {
      print_usage();

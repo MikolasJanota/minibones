@@ -161,8 +161,8 @@ public:
     c2a_map.erase(cpos);       // Remove assertion from consideration
   }
 
-  //protected:
-public:
+protected:
+//public:
 
   // Constructor/destructor
 

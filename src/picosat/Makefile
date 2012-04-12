@@ -17,9 +17,15 @@ CFLAGS+=-pg
 LNFLAGS+=-pg
 endif
 
+
+PICOFLAGS=-fno-strict-aliasing
+PICOFLAGS=-DTRACE
+
 ifdef DBG
 CFLAGS+=-O0
 CFLAGS+=-ggdb
+PICOFLAGS+=-ggdb
+PICOFLAGS+=-O0
 else
 PICOFLAGS+=-O3
 PICOFLAGS+=-DNDEBUG
@@ -54,7 +60,7 @@ depend:
 
 picosat.o: picosat.c
 	@echo Compiling: $@
-	gcc ${PICOFLAGS}  -c -o $@ $<
+	gcc $(PICOFLAGS)  -c -o $@ $<
 
 ## Build rule
 %.o:	%.cc

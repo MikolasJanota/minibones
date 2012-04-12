@@ -8,6 +8,8 @@
 #define PICOWRAP_HH_22116
 #include "core/SolverTypes.h"
 #include "picosat_wrapper_incr.hh"
+#include "solver_config.hh"
+#include "solver_factory.hh"
 using Minisat::lbool;
 using Minisat::mkLit;
 using Minisat::sign;
@@ -15,6 +17,16 @@ using Minisat::var;
 using Minisat::vec;
 using Minisat::Lit;
 using Minisat::Var;
+
+class PicoConfig : public SATSolverConfig {
+public:
+  PicoConfig()  : _solver("picosat")  {}
+  bool   chk_sat_solver(const char* tsolver) { return !strcmp(_solver, tsolver); }
+  bool   get_incr_mode() { return true; }
+  int    get_verbosity()  { return 0; }
+private:
+  const char* _solver;
+};
 
 class PicoWrap {
 public:
@@ -27,7 +39,9 @@ public:
   bool                solve(const vec<Lit>& assumptions);
 private:
   IDManager           idm;
-  PicosatWrapperIncr  picosat;
+  SATSolverFactory    factory;
+  PicoConfig          config;
+  SATSolverWrapper&   picosat;
   BasicClauseSet      temporary_clauses;
   inline LINT         integer(Lit l);
 };

@@ -5,9 +5,11 @@
  * Copyright (C) 2012, Mikolas Janota
  */
 #include "PicoWrap.hh"
+#include "minisat_aux.hh"
 
 PicoWrap::PicoWrap()
-  : picosat(idm)
+  : factory(idm) 
+  , picosat(factory.instance(config))
 {
   picosat.init_all(); 
 }
@@ -37,7 +39,7 @@ bool  PicoWrap::solve(const vec<Lit>& assumptions) {
   for (int i=0; i<assumptions.size(); ++i) temporary[(size_t)i] = integer(assumptions[i]); 
 
   picosat.init_run();
-  const auto r = picosat.solve(temporary);
+  const auto r = ((PicosatWrapperIncr&)picosat).solve(temporary);
   bool return_value;
   switch (r) {
   case SAT_True: return_value = true; break;
