@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include <algorithm>
 #include "ToolConfig.hh"
-#include "pico_test.hh"
 #include "ReadCNF.hh"
 #include "auxiliary.hh"
 #include "BackboneInformation.hh"
