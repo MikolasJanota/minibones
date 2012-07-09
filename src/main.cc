@@ -360,12 +360,12 @@ static void finishup() {
 void print_usage() {
   cout << "USAGE"<<"\tminibones [file name]"<<endl;
   cout<<"    -l ... lifting"<<endl;
-  cout<<"    -b ... variable bumping"<<endl;
+  cout<<"    -b ... variable activity bumping"<<endl;
   cout<<"    -r ... rotatable variables"<<endl;
   cout<<"    -u ... upper bound"<<endl;
   cout<<"    -c S ... chunk of size S (requires -u)"<<endl;
   cout<<"    -m ... rando*m* content of  chunks(requires -u)"<<endl;
-  cout<<"    -i ... insertion of the backbone in to the formula after it has been found (this is default in lower bound)"<<endl;
+  cout<<"    -i ... insertion of the backbone into the formula after it has been found (this is default in lower bound)"<<endl;
   cout<<"    -k ... which *k*eeps a literal in the chunk until it is decided whether it is  a backbone or not (requires -u)."<<endl;
   cout<<"    -p ... programming chunks (one big clause is programmed to represent different chunks)"<<endl;
   cout << "NOTES:"<<endl;
