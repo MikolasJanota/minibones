@@ -50,11 +50,11 @@ CFLAGS+=-DUSE_PICOSAT
 OTHER="./picosat/*.o"
 endif
 
-.PHONY: m p
+.PHONY: m p t
 
 all:  minibones
 
-minibones:  m $(COBJS) 
+minibones:  m p $(COBJS) 
 	@echo Linking: $@
 	@$(CXX)  -o $@ $(COBJS) $(OTHER) $(LNFLAGS) $(LIBD) $(LIBS)
 
@@ -65,14 +65,16 @@ m:
 lib: all
 	ar -rcsv libmifumax.a `ls -1 *.o | grep -v 'main.o'`
 
-
 p:
-	cd p ; make
+	cd picosat ; make
 
 depend:
 	rm -f $(DEPFILE)
 	@echo $(DEPTOKEN) > $(DEPFILE)
 	makedepend $(DEPFLAGS) -- $(CFLAGS) -- $(CSRCS)
+
+t:
+	bash -c './minibones ../examples/t1.cnf ; [ $$? == 10 ]'
 
 ## Build rule
 %.o:	%.cc
@@ -84,6 +86,7 @@ clean:
 	@rm -f minibones minibones.exe $(COBJS)
 	@export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) clean
 	@rm -rf ./minisat/objs
+	@cd picosat ; make clean
 	@rm -f $(DEPFILE)
 
 ### Makefile ends here

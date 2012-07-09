@@ -64,7 +64,7 @@ bool Worker::initialize() {
 
 void Worker::run() {
   output << "c starting computation"<<endl;
-  for (Var variable=1; variable<=variable_range.second ;++variable) {        
+  for (Var variable=1; variable<=variable_range.second; ++variable) {
     if (should_stop()) break; //stop the work
     if (!to_test[variable]) continue;
     const time_t sst1 = time(NULL);

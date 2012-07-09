@@ -17,13 +17,21 @@ CFLAGS+=-pg
 LNFLAGS+=-pg
 endif
 
+
+PICOFLAGS=-fno-strict-aliasing
+PICOFLAGS=-DTRACE
+
 ifdef DBG
 CFLAGS+=-O0
 CFLAGS+=-ggdb
-CFLAGS+=-DDBG
+PICOFLAGS+=-ggdb
+PICOFLAGS+=-O0
 else
+PICOFLAGS+=-O3
+PICOFLAGS+=-DNDEBUG
 CFLAGS+=-DNDEBUG
 CFLAGS+=-O3
+CFLAGS+=-DNCHECK
 endif
 
 ifdef NOO
@@ -33,7 +41,7 @@ endif
 CFLAGS += -Wall -DBUILDDATE='"$(BUILDDATE)"' -DDISTDATE='"$(DISTDATE)"'
 CFLAGS += -DCHANGESET='"$(CHANGESET)"' -DRELDATE='"$(RELDATE)"'
 CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated 
-CFLAGS+=-std=c++0x
+# CFLAGS+=-std=c++0x
 LIBS+=-lz
 
 ifdef STATIC
@@ -52,7 +60,7 @@ depend:
 
 picosat.o: picosat.c
 	@echo Compiling: $@
-	gcc -c -o $@ $<
+	gcc $(PICOFLAGS)  -c -o $@ $<
 
 ## Build rule
 %.o:	%.cc

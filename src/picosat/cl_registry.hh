@@ -126,11 +126,7 @@ protected:
     delete cl;
   }
 
-  BasicClause* lookup_vect(vector<LINT>& clits) {
-    assert(is_sorted(clits.begin(), clits.end(), AbsLitLess()));
-    iv2cl_iterator ippos = v2p_map.find(&clits);
-    return (ippos != v2p_map.end()) ? ippos->second : NULL;
-  }
+  BasicClause* lookup_vect(vector<LINT>& clits);
 
   BasicClause* lookup_vect(LINT num, const LINT ivect[]) {
     vector<LINT> clits(ivect, ivect+num);

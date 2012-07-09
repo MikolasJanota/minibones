@@ -135,9 +135,9 @@ SATRes PicosatWrapperIncr::solve(const vector<LINT>& assumptions)
   transmit_assumptions();
 
   // hack by Mikolas ////
-  for (auto i=assumptions.begin(); i != assumptions.end(); ++i) {
+  for (vector<LINT>::const_iterator i=assumptions.begin(); i != assumptions.end(); ++i) {
     const LINT l = *i;
-    assert(std::abs(l)<=maxvid);
+    assert((ULINT)std::abs(l)<=maxvid);
     picosat_assume(l);
   }
   //////////////////////
