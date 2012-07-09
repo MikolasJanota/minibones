@@ -21,7 +21,9 @@ ifdef DBG
 CFLAGS+=-O0
 CFLAGS+=-ggdb
 CFLAGS+=-DDBG
+MSAT=libd
 else
+MSAT=libr
 CFLAGS+=-DNDEBUG
 CFLAGS+=-O3
 endif
@@ -36,7 +38,7 @@ CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-dep
 CFLAGS+=-I./minisat/
 CFLAGS+=-I./picosat/
 CFLAGS+=-std=c++0x
-LIBS+=-lz
+LIBS+=-lz -lminisat
 
 ifdef STATIC
 CFLAGS+=-static
@@ -45,6 +47,7 @@ endif
 
 ifdef USE_PICOSAT
 CFLAGS+=-DUSE_PICOSAT
+OTHER="./picosat/*.o"
 endif
 
 .PHONY: m p
@@ -53,12 +56,15 @@ all:  minibones
 
 minibones:  m $(COBJS) 
 	@echo Linking: $@
-	@$(CXX)  -o $@ $(COBJS) ./picosat/*.o ./minisat/objs/*.o $(LNFLAGS) $(LIBD) $(LIBS)
+	@$(CXX)  -o $@ $(COBJS) $(OTHER) $(LNFLAGS) $(LIBD) $(LIBS)
 
 m: 
-	export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) objs 
-	export MROOT=`pwd`/minisat ; cd ./minisat/utils; make CXX=$(CXX) objs
-	mkdir -p minisat/objs ; cd minisat/objs ; cp ../core/*.o .; cp ../utils/*.o . ; rm Main.*
+	export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) LIB=minisat $(MSAT)
+
+
+lib: all
+	ar -rcsv libmifumax.a `ls -1 *.o | grep -v 'main.o'`
+
 
 p:
 	cd p ; make
@@ -75,7 +81,7 @@ depend:
 
 ## Clean rule
 clean:
-	@rm -f dilpaso dilpaso.exe $(COBJS)
+	@rm -f minibones minibones.exe $(COBJS)
 	@export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) clean
 	@rm -rf ./minisat/objs
 	@rm -f $(DEPFILE)
