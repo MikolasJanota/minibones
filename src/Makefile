@@ -50,7 +50,7 @@ CFLAGS+=-DUSE_PICOSAT
 OTHER="./picosat/*.o"
 endif
 
-.PHONY: m p t
+.PHONY: m p t sources
 
 all:  minibones
 
@@ -67,6 +67,10 @@ lib: all
 
 p:
 	cd picosat ; make
+
+
+sources:
+	noweave -index -autodefs c -filter /home/mikolas/bin/noweb-2.11b/contrib/kostas/C++.filter CoreBased.tex > CoreBased.tex
 
 depend:
 	rm -f $(DEPFILE)
