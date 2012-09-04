@@ -5,14 +5,14 @@
 
 DEPFILE	 = .depends
 DEPTOKEN = '\# MAKEDEPENDS'
-DEPFLAGS = -Y -f $(DEPFILE) -s $(DEPTOKEN) 
-CSRCS    = $(wildcard *.cc) 
+DEPFLAGS = -Y -f $(DEPFILE) -s $(DEPTOKEN)
+CSRCS    = $(wildcard *.cc)
 COBJS    = $(CSRCS:.cc=.o)
 LIBD =
 LIBS =
 CXX?=g++
 
-ifdef PROF 
+ifdef PROF
 CFLAGS+=-pg
 LNFLAGS+=-pg
 endif
@@ -34,11 +34,11 @@ endif
 
 CFLAGS += -Wall -DBUILDDATE='"$(BUILDDATE)"' -DDISTDATE='"$(DISTDATE)"'
 CFLAGS += -DCHANGESET='"$(CHANGESET)"' -DRELDATE='"$(RELDATE)"'
-CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated -D _MSC_VER
+CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated
 CFLAGS+=-I./minisat/
 CFLAGS+=-I./picosat/
 CFLAGS+=-std=c++0x
-LIBS+=-lz -lminisat
+LIBS+=-lz
 
 ifdef STATIC
 CFLAGS+=-static
@@ -48,22 +48,23 @@ endif
 ifdef USE_PICOSAT
 CFLAGS+=-DUSE_PICOSAT
 OTHER="./picosat/*.o"
+SAT_SOLVER=p
+else
+LIBS+=-lminisat
+LIBD+=-L./minisat/core
+SAT_SOLVER=m
 endif
 
 .PHONY: m p t sources
 
 all:  minibones
 
-minibones:  m p $(COBJS) 
+minibones: $(SAT_SOLVER) $(COBJS)
 	@echo Linking: $@
-	@$(CXX)  -o $@ $(COBJS) $(OTHER) $(LNFLAGS) $(LIBD) $(LIBS)
+	$(CXX) -o $@ $(COBJS) $(OTHER) $(LNFLAGS) $(LIBD) $(LIBS)
 
-m: 
+m:
 	export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) LIB=minisat $(MSAT)
-
-
-lib: all
-	ar -rcsv libmifumax.a `ls -1 *.o | grep -v 'main.o'`
 
 p:
 	cd picosat ; make
