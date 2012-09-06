@@ -33,7 +33,7 @@ using Minisat::vec;
 @ 
 <<Class declaration>>=
 namespace minibones {
-  class CoreBased {
+  class CoreBased : public BackboneInformation {
   public: <<Public members>>
   private: <<Private members>>
   };
@@ -49,6 +49,8 @@ virtual ~CoreBased();
 bool initialize(); // initialize, returns true iff the instance is SAT
 void run();        // start the worker, initialize must be called first.
 virtual bool is_backbone(const Lit& literal) const;
+size_t  get_solver_calls() const { return solver_calls; }
+size_t  get_solver_time() const  { return solver_time; }
 
 @ Sets of literals that might or must be backbones. When we say
 might, we mean that it was not decided either way whether it is a
@@ -59,11 +61,35 @@ LitBitSet           must_be;
 
 @ 
 <<Private members>>=
+const ToolConfig&   tool_configuration;
+ostream&            output;
+const Var           max_id;
+const CNF&          clauses;
+
+@ Statistics.
+<<Private members>>=
+size_t              solver_calls;  // number of solver calls, for statistical purposes
+double              solver_time;   // for statistical purposes
+
+
+@ Helper objects.
+<<Private members>>=
+MiniSatExt          solver;
+Lifter              lifter;               // used to reduce models via lifting
+Rotatable           rotatable_computer;   // used to get rotatable variables
+
+
+@ 
+<<Private members>>=
 MiniSatExt          sat_solver;
 void process_model(const vec<lbool>& model);        // calls pruning techniques and debones based of the model
 void process_pruned_model(const vec<lbool>& model); // debones everything not in the model
 inline bool debone(Lit literal);                    // mark a literal as not a backbone
 inline void mark_backbone(Lit literal);             // mark a literal as  a backbone
+void test_backbones(const LitBitSet& literals);
+inline bool run_solver(const vec<Lit>& assumptions);
+inline bool run_solver();
+
 
 @ 
 <<In-line methods implementation>>=
@@ -72,12 +98,32 @@ inline bool CoreBased::debone(Lit literal) {
   return might_be.remove(literal);
 }
 
+@ Move literal from candidates ([[might_be]]) to backbones ([[must_be]]).
+<<In-line methods implementation>>=
 inline void CoreBased::mark_backbone(Lit literal) { 
   assert(might_be.get(literal));
   might_be.remove(literal);
-  must_be.add(literal);
+  might_be.remove(~literal);
+  if (must_be.add(literal)) {
+    if (tool_configuration.get_backbone_insertion()) {
+      sat_solver.addClause(literal);
+    }
+  }
 }
 
+bool CoreBased::run_solver(const vec<Lit>& assumptions) {
+  const auto t0 = read_cpu_time();
+  const bool retv = solver.solve(assumptions);
+  const auto t1 = read_cpu_time();
+  solver_time+=(t1-t0);
+  ++solver_calls;
+  return retv;
+}
+
+bool CoreBased::run_solver() {
+  const vec<Lit> assumptions;
+  return run_solver(assumptions);
+}
 
 @ Implementation.
 <<CoreBased.cc>>=
@@ -85,11 +131,67 @@ inline void CoreBased::mark_backbone(Lit literal) {
 <<Implementation>>
 
 
+@ Constructor and destructor implementation.
+<<Implementation>>=
+CoreBased::CoreBased(ToolConfig& ptool_configuration, ostream& poutput, 
+   Var pmax_id, const CNF& pclauses)
+: tool_configuration(ptool_configuration)
+, output(poutput)
+, max_id(pmax_id)
+, clauses(pclauses)
+, solver_calls(0)
+, solver_time(0)
+, lifter(clauses)
+, rotatable_computer(clauses)
+{ /* */ }
+
+CoreBased::~CoreBased() { /* */ }
+
+
+@ Populates the solver and computes the initial model.
+<<Implementation>>=
+bool CoreBased::initialize() {
+  //initialize the solver
+  for (Var i=0; i<=max_id; ++i) sat_solver.newVar();
+  vec<Lit> ls;
+  FOR_EACH(ci, clauses) {
+    ls.clear ();
+    FOR_EACH(li, *ci) {
+      const Lit l = *li;
+      assert (var(l) <= max_id);
+      ls.push(l);
+    }
+    sat_solver.addClause(ls);
+  }
+
+  // get the first model
+  const bool result = run_solver();
+  if (!result) {// the whole instance is not satisfiable
+    return false;
+  }
+
+  const vec<lbool>& model = solver.model;
+
+  for (Var variable = 1; variable <= max_id; ++variable) {
+    if (max_id >= model.size()) continue;
+    const lbool value = model[variable];
+    if (value != l_Undef) {
+      const Lit l = mkLit(variable, value==l_False);
+      might_be.add(l);
+    }
+  }
+
+  process_model(solver.model);
+
+  return true;
+}
+
+
 @
 <<Implementation>>=
 void CoreBased::run() {
   LitBitSet relaxed;
-  while (true) {
+  while (might_be.size()) {
     vec<Lit> assumptions;
     <<Prepare assumptions>>;
     const bool flipped = sat_solver.solve(assumptions);
@@ -97,20 +199,6 @@ void CoreBased::run() {
     else { <<Handle UNSAT>> }
   }
 }
-
-@ Everything was flipped, unschedule the literals.
-<<Handle SAT>>=
-process_model(sat_solver.model);
-
-
-@ Impossible to flip, relax core.
-<<Handle UNSAT>>=
-const auto& conflict = sat_solver.conflict;
-if (sat_solver.conflict.size()==1) // A unit conflict means backbone. 
-  mark_backbone(conflict[0]); 
-for (int i=0; i<conflict.size(); ++i) 
-  relaxed.add(~conflict[0]);
-
 
 @ Put in the assumptions negations of the literals that still might be
 backbones and are not relaxed.
@@ -121,6 +209,86 @@ FOR_EACH(li, might_be) {
   assumptions.push(l);
 }
 
+@ All the [[might_be]] literals that are not relaxed where flipped,
+remove them from [[might_be]].
+<<Handle SAT>>=
+process_model(sat_solver.model);
+
+@ Impossible to flip, relax core. If the relaxation leads to a
+relaxation of all the remaining candidates, we revert to the
+one-chunk algorithm.
+<<Handle UNSAT>>=
+const auto& conflict = sat_solver.conflict;
+if (sat_solver.conflict.size()==1) // A unit conflict means backbone. 
+  mark_backbone(conflict[0]); 
+for (int i=0; i<conflict.size(); ++i) 
+  relaxed.add(~conflict[0]);
+if (relaxed.size()==might_be.size()) {
+  test_backbones(relaxed);
+}
+
+@ Test if given literals are backbones one by one.
+<<Implementation>>=
+void CoreBased::test_backbones(const LitBitSet& literals) {
+  vec<Lit> assumptions(1);
+  FOR_EACH (li, literals) {
+    const Lit l=*li;
+    if (~might_be.get(l)) continue;
+    assumptions[0]=~l;
+    const bool flipped = sat_solver.solve(assumptions);
+    if (flipped) process_model(sat_solver.model);
+    else mark_backbone(l);
+  }
+}
+
+@ Based on tool configuration, try to reduce the given model and then
+filter out candidates for backbones.
+<<Implementation>>=
+void CoreBased::process_model(const vec<lbool>& model) {
+  if (tool_configuration.get_scdc_pruning()) {
+    vec<lbool> rmodel;
+    vec<Lit> assumptions;
+    lifter.reduce(assumptions, model, rmodel);
+    assert(lifter.is_model(rmodel));
+    process_pruned_model(rmodel);
+  } else if (tool_configuration.get_rotatable_pruning ()) {
+    VarSet pruned;
+    rotatable_computer.get_rotatables(model, pruned);
+    FOR_EACH (vi, pruned) {
+      const Lit pl = mkLit(*vi);
+      const Lit nl = ~pl;
+      debone(pl);
+      debone(nl);
+    }
+    process_pruned_model(model);
+  } else {
+    process_pruned_model(model);
+  }
+}
+
+@ Remove all literals that do not appear in the given [[model]] from
+backbone candidates (represented by [[might_be]]).
+<<Implementation>>=
+void CoreBased::process_pruned_model(const vec<lbool>& model) {
+  for (Var variable = 1; variable < model.size(); ++variable) {
+    const lbool value = model[variable];
+    const Lit   pos_lit = mkLit(variable);
+    const Lit   neg_lit = ~mkLit(variable);
+    if (value != l_True) might_be.remove(pos_lit);
+    if (value != l_False) might_be.remove(neg_lit);
+  }
+
+  for (Var variable=model.size(); variable<=max_id; ++variable) {
+    const Lit pos_lit = mkLit(variable);
+    might_be.remove( pos_lit);
+    might_be.remove(~pos_lit);
+  }
+}
+
+@ 
+<<Implementation>>=
+bool CoreBased::is_backbone(const Lit& literal) const 
+{ return must_be.get(literal); }
 
 @
 <<CC includes>>=

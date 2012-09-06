@@ -14,6 +14,7 @@
 #include "BackboneInformation.hh"
 #include "Worker.hh"
 #include "UpperBound.hh"
+#include "CoreBased.hh"
 #include "UpperBoundProg.hh"
 
 
@@ -27,6 +28,7 @@ ofstream        output_file;
 ToolConfig      config;
 Worker          *pworker=NULL;
 UpperBound      *pupperbound=NULL;
+CoreBased       *pcorebased=NULL;
 UpperBoundProg  *pupperbound_prog=NULL;
 Range           range;
 bool            instance_sat = false;
@@ -37,6 +39,7 @@ bool parse_options(int argc, char** argv, /*out*/ToolConfig& config);
 void print_backbone(const BackboneInformation& worker, const Range& range, ToolConfig& config, ostream& output);
 int  run_worker(ToolConfig& config, ostream& output);
 int run_upper_bound(ToolConfig& config, ostream& output);
+int run_core_based(ToolConfig& config, ostream& output);
 int run_upper_bound_prog(ToolConfig& config, ostream& output);
 void register_sig_handlers();
 void initialize_picosat();
@@ -58,6 +61,8 @@ int main(int argc, char** argv) {
     return_value = tests_okay ? 0 : 20;
   } else if (config.get_use_upper_bound()) {
     return_value = run_upper_bound(config, output);
+  } else if (config.get_use_core_based()) {
+    return_value = run_core_based(config, output);
   } else if (config.get_use_upper_bound_prog()) {
     return_value = run_upper_bound_prog(config, output);
   } else {
@@ -115,6 +120,39 @@ int run_upper_bound(ToolConfig& config, ostream& output) {
   return 10;
 }
 
+
+int run_core_based(ToolConfig& config, ostream& output) {
+  //read input
+  Reader* fr = make_reader(config.get_input_file_name());  
+  ReadCNF reader(*fr);
+  reader.read();
+
+  //determine which part of variables to compute backbone of
+  range=Range(1,reader.get_max_id());
+  output << "range: "<<range.first<<"-"<<range.second<<endl;
+  pcorebased = new CoreBased(config,output, reader.get_max_id(), reader.get_clause_vector());
+  CoreBased& corebased=*pcorebased;
+  if (!corebased.initialize()) {//unsatisfiable
+    config.prefix(output) << "instance unsatisfiable" << endl;
+    output << "s 0" << endl;
+    delete pcorebased; 
+    return 20;
+  }
+  instance_sat = true;
+  //run corebased
+  corebased.run();
+  config.prefix(output) << "computation completed " << endl;
+  cout << "i sc:" << corebased.get_solver_calls() << endl;
+  cout << "i st:" << corebased.get_solver_time() << endl;
+  cout << "i ast:" << setprecision(2) << (corebased.get_solver_time()/(double)corebased.get_solver_calls()) << endl;
+  //print results
+  print_backbone(corebased, range, config, output);
+  delete pcorebased; 
+  delete fr;
+  return 10;
+}
+
+
 int run_upper_bound_prog(ToolConfig& config, ostream& output) {
   //read input
   Reader* fr = make_reader(config.get_input_file_name());  
@@ -145,9 +183,6 @@ int run_upper_bound_prog(ToolConfig& config, ostream& output) {
   delete fr;
   return 10;
 }
-
-
-
 
 int run_worker(ToolConfig& config, ostream& output) {
   //read input
@@ -225,7 +260,7 @@ void print_header(ToolConfig& config) {
  bool parse_options(int argc, char** argv, ToolConfig& config) {
   opterr = 0;
   int c;
-  while ((c = getopt(argc, argv, "obhikmpuc:rl")) != -1) {
+  while ((c = getopt(argc, argv, "eobhikmpuc:rl")) != -1) {
     switch (c) {
     case 'h':
       print_help=true;
@@ -235,6 +270,9 @@ void print_header(ToolConfig& config) {
       break;
     case 'o':
       config.set_use_cores(true);
+      break;
+    case 'e':
+      config.set_use_core_based(true);
       break;
     case 'p':
       config.set_use_upper_bound_prog(true);

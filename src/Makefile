@@ -34,7 +34,7 @@ endif
 
 CFLAGS += -Wall -DBUILDDATE='"$(BUILDDATE)"' -DDISTDATE='"$(DISTDATE)"'
 CFLAGS += -DCHANGESET='"$(CHANGESET)"' -DRELDATE='"$(RELDATE)"'
-CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated
+CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated -D _MSC_VER
 CFLAGS+=-I./minisat/
 CFLAGS+=-I./picosat/
 CFLAGS+=-std=c++0x
@@ -59,7 +59,7 @@ endif
 
 all:  minibones
 
-minibones: $(SAT_SOLVER) $(COBJS)
+minibones: sources $(SAT_SOLVER) $(COBJS)
 	@echo Linking: $@
 	$(CXX) -o $@ $(COBJS) $(OTHER) $(LNFLAGS) $(LIBD) $(LIBS)
 
@@ -70,8 +70,23 @@ p:
 	cd picosat ; make
 
 
-sources:
-	noweave -index -autodefs c -filter /home/mikolas/bin/noweb-2.11b/contrib/kostas/C++.filter CoreBased.tex > CoreBased.tex
+sources: CoreBased.hh CoreBased.cc
+
+CoreBased.hh: CoreBased.nw
+	notangle -L -RCoreBased.hh CoreBased.nw >CoreBased.hh
+
+CoreBased.cc: CoreBased.nw
+	notangle -L -RCoreBased.cc CoreBased.nw >CoreBased.cc
+
+doc:
+	noweave -index -autodefs c  CoreBased.nw | \
+        sed 's/documentclass{article}/documentclass{article}\\usepackage[pdftex,colorlinks=true,linkcolor=blue]{hyperref}/' > CoreBased.tex
+	pdflatex CoreBased && pdflatex CoreBased
+
+docf:
+	noweave -index -autodefs c -filter /home/mikolas/bin/noweb-2.11b/contrib/kostas/C++.filter CoreBased.nw | \
+        sed 's/documentclass{article}/documentclass{article}\\usepackage[pdftex,colorlinks=true,linkcolor=blue]{hyperref}/' > CoreBased.tex
+	pdflatex CoreBased && pdflatex CoreBased
 
 depend:
 	rm -f $(DEPFILE)

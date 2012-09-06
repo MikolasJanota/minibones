@@ -20,3 +20,7 @@ const_infinite_LitBitSetIterator::const_infinite_LitBitSetIterator(const LitBitS
   while (i<2 || !ls.get(index2literal(i))) i=(i+1) % ls.physical_size();
   assert (ls.get(index2literal(i)));
 }
+
+const_LitBitSetIterator::const_LitBitSetIterator(const LitBitSet& ls, size_t x) : ls(ls), i(x) {
+  while ((i<ls.physical_size()) && !ls.get(index2literal(i))) ++i;
+}
