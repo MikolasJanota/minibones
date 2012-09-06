@@ -221,7 +221,7 @@ const auto& conflict = sat_solver.conflict;
 if (sat_solver.conflict.size()==1) // A unit conflict means backbone. 
   mark_backbone(conflict[0]); 
 for (int i=0; i<conflict.size(); ++i) 
-  relaxed.add(~conflict[0]);
+  relaxed.add(conflict[0]);
 if (relaxed.size()==might_be.size()) {
   test_backbones(relaxed);
 }
