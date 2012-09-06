@@ -130,7 +130,7 @@ int run_core_based(ToolConfig& config, ostream& output) {
   //determine which part of variables to compute backbone of
   range=Range(1,reader.get_max_id());
   output << "range: "<<range.first<<"-"<<range.second<<endl;
-  pcorebased = new CoreBased(config,output, reader.get_max_id(), reader.get_clause_vector());
+  pcorebased = new CoreBased(config, output, reader.get_max_id(), reader.get_clause_vector());
   CoreBased& corebased=*pcorebased;
   if (!corebased.initialize()) {//unsatisfiable
     config.prefix(output) << "instance unsatisfiable" << endl;

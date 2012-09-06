@@ -74,7 +74,6 @@ double              solver_time;   // for statistical purposes
 
 @ Helper objects.
 <<Private members>>=
-MiniSatExt          solver;
 Lifter              lifter;               // used to reduce models via lifting
 Rotatable           rotatable_computer;   // used to get rotatable variables
 
@@ -113,7 +112,7 @@ inline void CoreBased::mark_backbone(Lit literal) {
 
 bool CoreBased::run_solver(const vec<Lit>& assumptions) {
   const auto t0 = read_cpu_time();
-  const bool retv = solver.solve(assumptions);
+  const bool retv = sat_solver.solve(assumptions);
   const auto t1 = read_cpu_time();
   solver_time+=(t1-t0);
   ++solver_calls;
@@ -152,7 +151,7 @@ CoreBased::~CoreBased() { /* */ }
 <<Implementation>>=
 bool CoreBased::initialize() {
   //initialize the solver
-  for (Var i=0; i<=max_id; ++i) sat_solver.newVar();
+  sat_solver.new_variables(max_id);
   vec<Lit> ls;
   FOR_EACH(ci, clauses) {
     ls.clear ();
@@ -170,7 +169,7 @@ bool CoreBased::initialize() {
     return false;
   }
 
-  const vec<lbool>& model = solver.model;
+  const vec<lbool>& model = sat_solver.model;
 
   for (Var variable = 1; variable <= max_id; ++variable) {
     if (max_id >= model.size()) continue;
@@ -180,8 +179,7 @@ bool CoreBased::initialize() {
       might_be.add(l);
     }
   }
-
-  process_model(solver.model);
+  process_model(sat_solver.model);
 
   return true;
 }
@@ -206,7 +204,7 @@ backbones and are not relaxed.
 FOR_EACH(li, might_be) {
   const Lit l = *li;
   if (relaxed.get(l)) continue;
-  assumptions.push(l);
+  assumptions.push(~l);
 }
 
 @ All the [[might_be]] literals that are not relaxed where flipped,
@@ -278,7 +276,7 @@ void CoreBased::process_pruned_model(const vec<lbool>& model) {
     if (value != l_False) might_be.remove(neg_lit);
   }
 
-  for (Var variable=model.size(); variable<=max_id; ++variable) {
+  for (Var variable=std::max(model.size(),1); variable<=max_id; ++variable) {
     const Lit pos_lit = mkLit(variable);
     might_be.remove( pos_lit);
     might_be.remove(~pos_lit);
