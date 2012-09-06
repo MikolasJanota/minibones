@@ -211,6 +211,7 @@ FOR_EACH(li, might_be) {
 remove them from [[might_be]].
 <<Handle SAT>>=
 process_model(sat_solver.model);
+relaxed.clear();
 
 @ Impossible to flip, relax core. If the relaxation leads to a
 relaxation of all the remaining candidates, we revert to the
