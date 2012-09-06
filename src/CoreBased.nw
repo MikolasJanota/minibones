@@ -112,7 +112,7 @@ inline void CoreBased::mark_backbone(Lit literal) {
 
 bool CoreBased::run_solver(const vec<Lit>& assumptions) {
   const auto t0 = read_cpu_time();
-  const bool retv = sat_solver.solve(assumptions);
+  const bool retv = run_solver(assumptions);
   const auto t1 = read_cpu_time();
   solver_time+=(t1-t0);
   ++solver_calls;
@@ -192,7 +192,7 @@ void CoreBased::run() {
   while (might_be.size()) {
     vec<Lit> assumptions;
     <<Prepare assumptions>>;
-    const bool flipped = sat_solver.solve(assumptions);
+    const bool flipped = run_solver(assumptions);
     if (flipped) { <<Handle SAT>>; }
     else { <<Handle UNSAT>> }
   }
@@ -234,7 +234,7 @@ void CoreBased::test_backbones(const LitBitSet& literals) {
     const Lit l=*li;
     if (~might_be.get(l)) continue;
     assumptions[0]=~l;
-    const bool flipped = sat_solver.solve(assumptions);
+    const bool flipped = run_solver(assumptions);
     if (flipped) process_model(sat_solver.model);
     else mark_backbone(l);
   }
