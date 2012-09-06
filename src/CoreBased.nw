@@ -112,7 +112,7 @@ inline void CoreBased::mark_backbone(Lit literal) {
 
 bool CoreBased::run_solver(const vec<Lit>& assumptions) {
   const auto t0 = read_cpu_time();
-  const bool retv = run_solver(assumptions);
+  const bool retv = sat_solver.solve(assumptions);
   const auto t1 = read_cpu_time();
   solver_time+=(t1-t0);
   ++solver_calls;
