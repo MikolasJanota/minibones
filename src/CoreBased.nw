@@ -83,6 +83,7 @@ Rotatable           rotatable_computer;   // used to get rotatable variables
 MiniSatExt          sat_solver;
 void process_model(const vec<lbool>& model);        // calls pruning techniques and debones based of the model
 void process_pruned_model(const vec<lbool>& model); // debones everything not in the model
+void make_chunk(vector<Lit>& literals);
 inline bool debone(Lit literal);                    // mark a literal as not a backbone
 inline void mark_backbone(Lit literal);             // mark a literal as  a backbone
 void test_backbones(const LitBitSet& literals);
@@ -184,34 +185,48 @@ bool CoreBased::initialize() {
   return true;
 }
 
-
-@
+@ The main loop of the class, which splits literals into chunks and
+tries to determine for each of the chunks whether it is a backbone or
+not.
 <<Implementation>>=
 void CoreBased::run() {
-  LitBitSet relaxed;
+  vector<Lit> chunk;
+  LitBitSet   relaxed; // literals removed from the chunk
+  vec<Lit>    assumptions; // assumptions passed onto the SAT solver
   while (might_be.size()) {
-    vec<Lit> assumptions;
-    <<Prepare assumptions>>;
-    const bool flipped = run_solver(assumptions);
-    if (flipped) { <<Handle SAT>>; }
-    else { <<Handle UNSAT>> }
+    make_chunk(chunk);
+    <<Process chunk>>;
   }
 }
 
-@ Put in the assumptions negations of the literals that still might be
-backbones and are not relaxed.
+@ Determine for the given chunk which literals are backbones by first
+trying to flip all the literals in the chunk and then gradually remove
+literals until the rest can be flipped.
+<<Process chunk>>=
+relaxed.clear();
+while (true) {
+  <<Prepare assumptions>>;
+  const bool flipped = run_solver(assumptions);
+  if (flipped) { <<Handle SAT>>; }
+  else { <<Handle UNSAT>>; }
+}
+
+
+@ Put in the assumptions negations of the literals that are in the
+chunk and are not relaxed.
 <<Prepare assumptions>>=
-FOR_EACH(li, might_be) {
+assumptions.clear();
+FOR_EACH(li, chunk) {
   const Lit l = *li;
   if (relaxed.get(l)) continue;
   assumptions.push(~l);
 }
 
-@ All the [[might_be]] literals that are not relaxed where flipped,
+@ All the [[might_be]] literals that are not relaxed were flipped,
 remove them from [[might_be]].
 <<Handle SAT>>=
 process_model(sat_solver.model);
-relaxed.clear();
+break; // we are done with the chunk
 
 @ Impossible to flip, relax core. If the relaxation leads to a
 relaxation of all the remaining candidates, we revert to the
@@ -224,6 +239,7 @@ for (int i=0; i<conflict.size(); ++i)
   relaxed.add(conflict[0]);
 if (relaxed.size()==might_be.size()) {
   test_backbones(relaxed);
+  break; // we are done with the chunk
 }
 
 @ Test if given literals are backbones one by one.
@@ -281,6 +297,19 @@ void CoreBased::process_pruned_model(const vec<lbool>& model) {
     const Lit pos_lit = mkLit(variable);
     might_be.remove( pos_lit);
     might_be.remove(~pos_lit);
+  }
+}
+
+@ Prepare a chunk of [[might_be]] literals to be inspected whether they are backbones or not.
+<<Implementation>>=
+void CoreBased::make_chunk(vector<Lit>& literals) {
+  const size_t chunk_size(tool_configuration.get_chunk_size() ? tool_configuration.get_chunk_size() : max_id);
+  const size_t real_chunk_size = std::min(chunk_size, might_be.size()); 
+  literals.clear();
+  FOR_EACH (li, might_be) {
+    if (literals.size() >= real_chunk_size) break;
+    const Lit lit = *li;
+    literals.push_back(lit);
   }
 }
 
