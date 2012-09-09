@@ -210,6 +210,7 @@ FOR_EACH(li, might_be) {
 @ All the [[might_be]] literals that are not relaxed where flipped,
 remove them from [[might_be]].
 <<Handle SAT>>=
+cerr<<"SAT"<<endl;
 process_model(sat_solver.model);
 relaxed.clear();
 
@@ -218,6 +219,7 @@ relaxation of all the remaining candidates, we revert to the
 one-chunk algorithm.
 <<Handle UNSAT>>=
 const auto& conflict = sat_solver.conflict;
+cerr<<"RX:"<<relaxed.size()<<" MBS: "<<might_be.size()<<" CS: "<<conflict.size()<<endl;
 if (sat_solver.conflict.size()==1) // A unit conflict means backbone. 
   mark_backbone(conflict[0]); 
 for (int i=0; i<conflict.size(); ++i) 
