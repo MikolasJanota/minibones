@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PATH=${PATH}:.
-PS="-l -r -u -ul -ur -uc3 -urc3 -ui  -uirc3 -uirc10 -ukrc3 -uikrc3 -pc3 -pc13 -prc3 -uimrc3 -uoi" 
+PS="-l -r -u -ul -ur -uc3 -urc3 -ui  -uirc3 -uirc10 -ukrc3 -uikrc3 -pc3 -pc13 -prc3 -uimrc3 -uoi -eic2 -ec3 -e" 
 
 ST=${RANDOM}
 
