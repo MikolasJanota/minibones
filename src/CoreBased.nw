@@ -14,23 +14,6 @@ Implementation of the class [[CoreBased]].
 #endif
 
 @ 
-<<Definitions and includes>>=
-#include <vector>
-#include <functional>
-#include "MiniSatExt.hh"
-#include "auxiliary.hh"
-#include "Lifter.hh"
-#include "ToolConfig.hh"
-#include "Rotatable.hh"
-#include "BackboneInformation.hh"
-#include "LitBitSet.hh"
-using Minisat::MiniSatExt;
-using Minisat::Var;
-using Minisat::Lit;
-using Minisat::vec;
-
-
-@ 
 <<Class declaration>>=
 namespace minibones {
   class CoreBased : public BackboneInformation {
@@ -111,6 +94,8 @@ inline void CoreBased::mark_backbone(Lit literal) {
   }
 }
 
+@ Wrappers around SAT solver for stats.
+<<In-line methods implementation>>=
 bool CoreBased::run_sat_solver(const vec<Lit>& assumptions) {
   const auto t0 = read_cpu_time();
   const bool retv = sat_solver.solve(assumptions);
@@ -124,6 +109,24 @@ bool CoreBased::run_sat_solver() {
   const vec<Lit> assumptions;
   return run_sat_solver(assumptions);
 }
+
+
+@ 
+<<Definitions and includes>>=
+#include <vector>
+#include <functional>
+#include "MiniSatExt.hh"
+#include "auxiliary.hh"
+#include "Lifter.hh"
+#include "ToolConfig.hh"
+#include "Rotatable.hh"
+#include "BackboneInformation.hh"
+#include "LitBitSet.hh"
+using Minisat::MiniSatExt;
+using Minisat::Var;
+using Minisat::Lit;
+using Minisat::vec;
+
 
 @ Implementation.
 <<CoreBased.cc>>=
@@ -186,13 +189,13 @@ bool CoreBased::initialize() {
 }
 
 @ The main loop of the class, which splits literals into chunks and
-tries to determine for each of the chunks whether it is a backbone or
+analyzes literals in each of the chunks whether they are backbones or
 not.
 <<Implementation>>=
 void CoreBased::run() {
-  LitBitSet   relaxed; // literals removed from assumptions
-  vec<Lit>    assumptions; // assumptions passed onto the SAT solver
-  vec<Lit>    old_assumptions; // assumptions in prev.\ iteration of inner loop
+  LitBitSet relaxed; // literals removed from assumptions
+  vec<Lit>  assumptions; // assumptions passed onto the SAT solver
+  vec<Lit>  old_assumptions; // assumptions in prev.\ iteration of inner loop
   while (might_be.size()) {
     const size_t chunk_size = make_chunk(old_assumptions);
     <<Process chunk>>;
