@@ -230,6 +230,7 @@ for (int i=0; i<old_assumptions.size(); ++i) {
 @ All the [[might_be]] literals that are not relaxed were flipped,
 remove them from [[might_be]].
 <<Handle SAT>>=
+// cerr<<"SAT"<<endl;
 process_model(sat_solver.model);
 break; // we are done with the chunk
 
@@ -238,6 +239,7 @@ relaxation of all the literals in the chunk, revert to the 1~test per
 literal algorithm.
 <<Handle UNSAT>>=
 const auto& conflict = sat_solver.conflict;
+// cerr<<"RX:"<<relaxed.size()<<" MBS: "<<might_be.size()<<" CS: "<<conflict.size()<<endl;
 if (sat_solver.conflict.size()==1) // A unit conflict means backbone. 
   mark_backbone(conflict[0]); 
 for (int i=0; i<conflict.size(); ++i) 
