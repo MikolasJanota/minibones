@@ -1,0 +1,365 @@
+% -*- mode: Noweb; noweb-code-mode: c++-mode -*-
+% File:  BBRed.nw
+% Author: mikolas
+% Created on: Fri, Mar 22, 2013 3:04:35 PM
+% Copyright (C) 2013, Mikolas Janota
+\section{Introduction}
+Given a CNF $\phi $ we wish to remove (some) redundant clauses. A
+clause $C\in\phi$ is {\em redundant}, if and only if
+$\phi\smallsetminus\{C\}\Rightarrow C$. Equivalently, a clause $C$ is
+redundant if and only if $\phi\smallsetminus\{C\}\land\lnot C$ is
+unsatisfiable. The latter formulation is more amenable for computation
+using a SAT oracle.
+
+This program tries to compute some redundant clauses by computing the
+{\em backbone} of the formula.  We say that a literal $l$ is part of a
+backbone if and only if $l$ is true in all models of the formula,
+i.e.\ $\phi\Rightarrow l$. Equivalently, a literal $l$ is a backbone
+iff $\phi\land\bar l$ is unsatisfiable. Again, this formulation is
+more amenable for SAT-based computations.
+
+\begin{proposition}\label{proposition:redundancy}
+  Let $\phi$ be a CNF and $\psi\subseteq\phi$ such that
+  $\psi\Rightarrow l$ for some literal $l$. The following set $R$ of
+  clauses is redundant:
+\[
+    R=\comprehension{C\in\phi}{l\in C\land C\notin\psi}
+\]
+\end{proposition}
+\begin{proof}
+  Since~$R$ is disjoint from $\psi$, it holds for an clause $C\in R$
+  that $\phi\smallsetminus\{C\}\Rightarrow l$. Because $l\in C$, then
+also $\phi\smallsetminus\{C\}\Rightarrow C$.
+\end{proof}
+
+The objective is to compute backbones of the given formula and remove
+redundant clauses based on \autoref{proposition:redundancy}.
+
+Note that all the above also holds for an unsatisfiable $\phi$ but it
+is not likely to be useful.
+
+\section{Public Interface}
+
+The program should be usable as a separate module, so we declare a
+class that stores the required functionality.
+
+<<BBRed.hh>>=
+#ifndef BBRED_HH_7380
+#define BBRED_HH_7380
+<<Definitions and includes>>
+class BBRed {
+public:<<Public members>>
+private:<<Private members>>
+};
+<<Inline implementation>>
+#endif
+
+<<BBRed.cc>>=
+#include "BBRed.hh"
+<<Implementation definitions and includes>>
+<<Implementation>>
+
+@ We use some types declared in the parent project. Mainly needed just
+for the definition of [[CNF]], which we are getting on the input.
+<<Definitions and includes>>=
+#include "types.hh"
+
+@ To use the class, one constructs it giving it the CNF to analyze and
+then calls [[run]]. After [[run]] finished,
+the function [[is_redundant(i)]] is used to inquire whether the clause
+[[cnf[i]]] is redundant, for [[i]] s.t.\ $0\leq{}$[[i]]${}<{}$[[cnf.size]].
+<<Public members>>=
+BBRed(Var max_id, const CNF& cnf);
+void run();
+inline bool is_redundant(size_t clause_index) const;
+inline size_t get_redundant_count() const;
+
+@ \section{Data Structures}
+
+\subsection{CNF Inversion}
+
+As betrayed by \autoref{proposition:redundancy}, we will need to be
+able to find clauses that contain a given literal. So we need a map
+from literals to clauses. since this probably will not be an
+efficiency bottleneck, we will use directly a map from literals to
+vectors of clause indices. For the purpose of mapping literals are
+translated to integers by the function [[Minisat::toInt]].
+
+<<Definitions and includes>>=
+#include <unordered_map>
+#include <vector>
+using std::unordered_map;
+using std::vector;
+
+<<Private members>>=
+unordered_map<int, vector<size_t> > lit2index;
+
+@ The data structure [[lit2index]] shall be populated when the class
+is being constructed using the following method.
+
+<<Private members>>=
+bool inverted;
+void invert(const CNF& cnf);
+
+<<Implementation>>=
+void BBRed::invert(const CNF& cnf) {
+  assert(!inverted);
+  for (size_t clause_index = 0; clause_index<cnf.size(); ++clause_index) {
+    const LitSet& clause = cnf[clause_index];     
+    FOR_EACH(itl, clause) {
+      const Lit l = *itl;
+      const int il = Minisat::toInt(l);
+      const auto i = lit2index.find(il);
+      if (i==lit2index.end()) {
+        lit2index[il].push_back(clause_index);
+      } else {
+        i->second.push_back(clause_index);
+      }
+    }
+  }
+  inverted=true;
+}
+
+@ The following function is used to retrieve clause indices that
+contain the given literal. Note that this implementation is ugly
+because if [[lit2index]] is updated the returned pointer might become
+invalid. Since a literal might not appear in the formula, we declare a
+constant [[empty_vector]] that is to be returned for such cases.
+
+<<Private members>>=
+const vector<size_t>& contain(const Lit l);
+const vector<size_t> empty_vector;
+
+<<Implementation>>=
+const vector<size_t>& BBRed::contain(const Lit l) {
+  assert(inverted);
+  const int il = Minisat::toInt(l);
+  const auto i = lit2index.find(il);
+  if (i==lit2index.end()) return empty_vector;
+  return i->second;
+}
+
+@ \subsection{CNF Representation and Unsatisfiable Cores}
+
+The premise of \autoref{proposition:redundancy} is that if for for the
+given CNF $\phi$, if $l$ is a backbone, i.e.\ $\phi\Rightarrow l$ or
+equivalently, $\phi\land\bar l$ is unsatisfiable. In order to utilize
+\autoref{proposition:redundancy} we also want to find a CNF
+$\psi\subseteq\phi$ s.t.\ $\psi\Rightarrow l$ or equivalently,
+$\psi\land\bar l$ is unsatisfiable.
+
+In practice this means that if $\psi\land\bar l$ is unsatisfiable, we
+also want to know the {\em unsatisfiable core} of $\psi\land\bar l$,
+i.e.\ the set of clauses responsible for the unsatisfiability.  For
+such we will use the assumption-based method, which means that each
+clause $C\in\phi$ will be given to the SAT solver as $\lnot s_C\lor
+C$, for some fresh variable $s_C$. Whenever the SAT solver is invoked,
+it is called with the assumptions $s_C$. The set of assumptions
+responsible for the unsatisfiability will appear in the last {\em
+  conflict clause} of the SAT solver and determine an unsatisfiable
+core.
+
+The variables $s_C$ are called {\em control variables}. When we
+discovered that a clause is redundant, we effectively delet it by
+adding a unit clause $\lnot s_C$. If this happens, such $s_C$ must not
+be given in the assumptions.
+
+The control variables will be stored in an array [[controls]] adhering
+to the invariant the control variable for the clause with index [[i]]
+is at [[controls[i]]]. We also have a map that maps control variables
+back to clause indices.
+
+<<Private members>>=
+vector<Var> controls;
+unordered_map<Var, size_t> control2index;
+
+@ Since we do not need to remember the formula that are operating on
+(we only need the inverse of it), we populate the safety solver and
+the relevant structures in one go.
+
+<<Private members>>=
+Solver solver;
+void fill_controls_and_sat(Var maxid, const CNF& cnf);
+
+<<Implementation>>=
+void BBRed::fill_controls_and_sat(Var maxid, const CNF& cnf) {
+  while (solver.nVars() <= max_id) solver.newVar();
+  assert(solver.nVars()>max_id); // variable 0 is not used
+  vec<Lit> lv;
+  for (size_t clause_index = 0; clause_index<cnf.size(); ++clause_index) {
+    const LitSet& clause = cnf[clause_index];
+    const Var control_variable = solver.newVar();
+    lv.clear();
+    lv.push(~mkLit(control_variable));
+    FOR_EACH(itl, clause) lv.push(*itl);
+    solver.addClause_(lv);
+
+    controls[clause_index] = control_variable;
+    control2index[control_variable] = clause_index;
+  }
+}
+
+@ \subsection{Construction and Getters}
+
+<<Private members>>=
+const Var max_id;
+vector<bool> redundant;
+size_t redundant_count;
+
+<<Implementation>>=
+BBRed::BBRed(Var max_id, const CNF& cnf)
+: inverted(false)
+, controls(cnf.size(), 0)
+, max_id(max_id)
+, redundant(cnf.size(), false)
+, redundant_count(0)
+{
+  invert(cnf);
+  fill_controls_and_sat(max_id, cnf);
+}
+
+<<Inline implementation>>=
+inline bool BBRed::is_redundant(size_t clause_index) const {
+  return redundant[clause_index];
+}
+
+<<Inline implementation>>=
+inline size_t BBRed::get_redundant_count() const {
+  return redundant_count;
+}
+
+
+@ \section{Computation}
+
+Throw the competition we use two sets of literals [[might_be]] and
+[[must_be]].  The set [[might_be]] contains a literal iff we do not
+know yet whether it is a backbone or not.  Conversely, the literal is
+in the set [[must_be]] iff it has been shown to be a
+backbone. Consequently, and the two sets must be disjoint.
+
+<<Definitions and includes>>=
+#include "LitBitSet.hh"
+
+<<Implementation definitions and includes>>=
+#include "LitBitSet.hh"
+
+<<Implementation>>=
+void BBRed::run() {
+ LitBitSet might_be;
+ LitBitSet must_be;
+ initialize_might_be(might_be);
+
+ vec<Lit> assumptions;
+ while (might_be.size()) {
+   const Lit to_test = *(might_be.begin());
+   assumptions.clear();
+   build_assumptions(to_test, assumptions);
+   const bool isbb = !solver.solve(assumptions);
+   if (isbb) handle_backbone(might_be, must_be, to_test, solver.conflict);
+   else prune_might_be(might_be,solver.model);
+ }
+}
+
+<<Private members>>=
+void initialize_might_be(LitBitSet& might_be);
+
+<<Implementation>>=
+void BBRed::initialize_might_be(LitBitSet& might_be) {
+ vec<Lit> assumptions;
+ FOR_EACH(ci,controls) assumptions.push(mkLit(*ci));
+ const bool is_sat = solver.solve(assumptions);
+
+ if (is_sat) {
+   const auto& model = solver.model;
+   const Var limit = std::min(model.size(),max_id+1);
+   for (int i=1; i<limit; ++i) {
+     const auto val = model[i];
+     if (val==l_Undef) continue;
+     might_be.add(val==l_True ? mkLit(i) : ~mkLit(i));
+   }
+ } else {
+   assert(false); //TODO!!!
+ }
+}
+
+<<Private members>>=
+void prune_might_be(LitBitSet& might_be, const vec<lbool>& model);
+
+<<Implementation>>=
+void BBRed::prune_might_be(LitBitSet& might_be, const vec<lbool>& model) {
+  const Var limit = std::min(model.size(),max_id+1);
+  for (int i=1; i<limit; ++i) {
+     const auto val = model[i];
+     if (val!=l_True) might_be.remove(mkLit(i));
+     if (val!=l_False) might_be.remove(~mkLit(i));
+  }
+}
+
+
+
+
+<<Private members>>=
+void build_assumptions(Lit to_test, vec<Lit>& assumptions);
+
+<<Implementation>>=
+void BBRed::build_assumptions(Lit to_test, vec<Lit>& assumptions) {
+  for (size_t clause_index=0; clause_index<controls.size(); ++clause_index) {
+    if (is_redundant(clause_index)) continue;
+    assumptions.push(mkLit(controls[clause_index]));
+  }
+  assumptions.push(~to_test);
+}
+
+<<Private members>>=
+void handle_backbone(
+  LitBitSet& might_be, LitBitSet& must_be,
+  Lit bb, const vec<Lit>& conflict);
+
+<<Implementation>>=
+void BBRed::handle_backbone(
+  LitBitSet& might_be, LitBitSet& must_be,
+  Lit bb, const vec<Lit>& conflict) {
+  assert(might_be.get(bb));
+  assert(!must_be.get(bb));
+  might_be.remove(bb);
+  must_be.add(bb);
+
+  vector<bool> core(controls.size(),false);
+  build_core(conflict, core, bb);
+
+  const auto& clauses = contain(bb);
+  FOR_EACH(cit,clauses) {
+    const size_t clause_index = *cit;
+    if (core[clause_index]) continue;
+    mark_redundant(clause_index);
+  }
+}
+
+
+<<Private members>>= 
+void mark_redundant(size_t clause_index);
+
+<<Implementation>>=
+void BBRed::mark_redundant(size_t clause_index) {
+  assert(!redundant[clause_index]);
+  assert(clause_index<controls.size());
+  ++redundant_count;
+  redundant[clause_index] = true;
+  solver.addClause(~mkLit(controls[clause_index]));
+}
+
+<<Private members>>= 
+void build_core(const vec<Lit>& conflict, vector<bool>& core, Lit bb_lit);
+
+<<Implementation>>=
+void BBRed::build_core(const vec<Lit>& conflict, vector<bool>& core, Lit bb_lit) {
+  assert(core.size()==controls.size());
+  for (int i=0; i<conflict.size(); ++i) {
+    const Lit reason = conflict[i];
+    if (bb_lit==reason) continue;
+    assert(sign(reason));
+    const auto i = control2index.find(var(reason));
+    assert(i!=control2index.end());
+    core[i->second]=true;
+  }
+}
