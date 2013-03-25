@@ -56,7 +56,6 @@ private:<<Private members>>
 
 <<BBRed.cc>>=
 #include "BBRed.hh"
-<<Implementation definitions and includes>>
 <<Implementation>>
 
 @ We use some types declared in the parent project. Mainly needed just
@@ -228,20 +227,24 @@ inline size_t BBRed::get_redundant_count() const {
   return redundant_count;
 }
 
-
 @ \section{Computation}
 
 Throw the competition we use two sets of literals [[might_be]] and
 [[must_be]].  The set [[might_be]] contains a literal iff we do not
 know yet whether it is a backbone or not.  Conversely, the literal is
 in the set [[must_be]] iff it has been shown to be a
-backbone. Consequently, and the two sets must be disjoint.
+backbone. Consequently, the two sets must be disjoint. Since these
+sets will be accessed to many times, they will be represented as
+bitsets.
 
 <<Definitions and includes>>=
 #include "LitBitSet.hh"
 
-<<Implementation definitions and includes>>=
-#include "LitBitSet.hh"
+@ The algorithm initializes the set [[might_be]] and leaves
+[[must_be]] empty. Then it loops while the set
+[[might_be]] is nonempty. In each iteration it picks some literal
+[[to_test]] from [[might_be]] an tests whether it is a backbone or
+not.
 
 <<Implementation>>=
 void BBRed::run() {
@@ -256,12 +259,18 @@ void BBRed::run() {
    build_assumptions(to_test, assumptions);
    const bool isbb = !solver.solve(assumptions);
    if (isbb) handle_backbone(might_be, must_be, to_test, solver.conflict);
-   else prune_might_be(might_be,solver.model);
+   else prune_might_be(might_be,solver.model,to_test);
  }
 }
 
-<<Private members>>=
-void initialize_might_be(LitBitSet& might_be);
+@ Even though it would be correct to initialize [[might_be]] to all
+possible literals we also take this opportunity to test whether the
+given instance is satisfiable or not. Hence this function first tests
+the satisfiability of the given formula and then initializes [[might_be]]
+accordingly. If the instance is {\em satisfiable}, only those literals that
+appear in the returned model can be backbones. If the instance is
+unsatisfiable, [[might_be]] is populated with all possible literals on the
+variables [[1..maxid]].
 
 <<Implementation>>=
 void BBRed::initialize_might_be(LitBitSet& might_be) {
@@ -278,37 +287,57 @@ void BBRed::initialize_might_be(LitBitSet& might_be) {
      might_be.add(val==l_True ? mkLit(i) : ~mkLit(i));
    }
  } else {
-   assert(false); //TODO!!!
+   for (Var i=1; i<=max_id; ++i) {
+     might_be.add(mkLit(i));
+     might_be.add(~mkLit(i));
+   }
  }
 }
 
-<<Private members>>=
-void prune_might_be(LitBitSet& might_be, const vec<lbool>& model);
+@ Recalled that to determine whether [[to_test]] is a backbone of
+$\phi$, we determine the satisfiability of
+$\phi\land\lnot{}$[[to_test]].  In our setup, however, things are
+little bit more complicated because within the SAT solver each clause
+is conditioned by its control variable. So we throw into the
+assumptions the negation of [[to_test]] but also control variables of
+clauses that are not marked as redundant.
 
 <<Implementation>>=
-void BBRed::prune_might_be(LitBitSet& might_be, const vec<lbool>& model) {
+void BBRed::build_assumptions(Lit to_test, vec<Lit>& assumptions) {
+  for (size_t cl_index=0; cl_index<controls.size(); ++cl_index) {
+    if (!is_redundant(cl_index))
+      assumptions.push(mkLit(controls[cl_index]));
+  }
+  assumptions.push(~to_test);
+}
+
+@ If [[to_test]] is found {\em not} to be a backbone, a model
+containing [[to_test]] is also returned. Remove from [[might_be]] all
+literals that do not appear in this model. The literal [[[to_test]] is
+given for sanity-check reasons.
+
+<<Implementation>>=
+void BBRed::prune_might_be(LitBitSet& might_be, const vec<lbool>& model, Lit to_test) {
+  assert((var(to_test)>=model.size) ||
+         !sign(to_test) || model[var(to_test)]!=l_True);
+  assert((var(to_test)>=model.size) ||
+         sign(to_test) || model[var(to_test)]!=l_False);
+
   const Var limit = std::min(model.size(),max_id+1);
   for (int i=1; i<limit; ++i) {
      const auto val = model[i];
      if (val!=l_True) might_be.remove(mkLit(i));
      if (val!=l_False) might_be.remove(~mkLit(i));
   }
+
 }
 
-
-
-
-<<Private members>>=
-void build_assumptions(Lit to_test, vec<Lit>& assumptions);
-
-<<Implementation>>=
-void BBRed::build_assumptions(Lit to_test, vec<Lit>& assumptions) {
-  for (size_t clause_index=0; clause_index<controls.size(); ++clause_index) {
-    if (is_redundant(clause_index)) continue;
-    assumptions.push(mkLit(controls[clause_index]));
-  }
-  assumptions.push(~to_test);
-}
+@ If a literal [[bb]] is found to be a backbone, the SAT solver gives
+us a conflict clause containing assumptions responsible for [[bb]]
+being a backbone. The following function constructs an UNSAT core
+based off this conflict clause and marks all clauses that contain
+[[bb]] but are outside of this core as redundant. The sets
+[[might_be]] and [[must_be]] updated accordingly.
 
 <<Private members>>=
 void handle_backbone(
@@ -327,11 +356,11 @@ void BBRed::handle_backbone(
   vector<bool> core(controls.size(),false);
   build_core(conflict, core, bb);
 
-  const auto& clauses = contain(bb);
-  FOR_EACH(cit,clauses) {
+  const auto& bb_clauses = contain(bb);
+  FOR_EACH(cit,bb_clauses) {
     const size_t clause_index = *cit;
-    if (core[clause_index]) continue;
-    mark_redundant(clause_index);
+    if (!core[clause_index])
+      mark_redundant(clause_index);
   }
 }
 
@@ -340,9 +369,6 @@ in the [[redundant]] set and also effectively remove it from the SAT
 solver by setting its control variable to false. Note that we need to
 check whether this clause has not already been found redundant before
 because a clause may contain multiple backbones.
-
-<<Private members>>= 
-void mark_redundant(size_t clause_index);
 
 <<Implementation>>=
 void BBRed::mark_redundant(size_t clause_index) {
@@ -353,8 +379,12 @@ void BBRed::mark_redundant(size_t clause_index) {
   solver.addClause(~mkLit(controls[clause_index]));
 }
 
-<<Private members>>= 
-void build_core(const vec<Lit>& conflict, vector<bool>& core, Lit bb_lit);
+
+@ The following function is used to construct an UNSAT core given a
+final conflict clause of the SAT solver. The function is also given
+the backbone literal [[bb_lit]] found by this call Because it might
+appear in the core. In fact, if the given instance is satisfiable, it
+{\em must} appear in the core.
 
 <<Implementation>>=
 void BBRed::build_core(const vec<Lit>& conflict, vector<bool>& core, Lit bb_lit) {
@@ -368,3 +398,11 @@ void BBRed::build_core(const vec<Lit>& conflict, vector<bool>& core, Lit bb_lit)
     core[i->second]=true;
   }
 }
+
+@ Declarations of the private methods used above follow.
+<<Private members>>=
+void initialize_might_be(LitBitSet& might_be);
+void mark_redundant(size_t clause_index);
+void build_core(const vec<Lit>& conflict, vector<bool>& core, Lit bb_lit);
+void prune_might_be(LitBitSet& might_be, const vec<lbool>& model, Lit to_test);
+void build_assumptions(Lit to_test, vec<Lit>& assumptions);
