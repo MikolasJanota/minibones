@@ -335,14 +335,19 @@ void BBRed::handle_backbone(
   }
 }
 
+@ Once we find out that a clause is redundant, we mark it as redundant
+in the [[redundant]] set and also effectively remove it from the SAT
+solver by setting its control variable to false. Note that we need to
+check whether this clause has not already been found redundant before
+because a clause may contain multiple backbones.
 
 <<Private members>>= 
 void mark_redundant(size_t clause_index);
 
 <<Implementation>>=
 void BBRed::mark_redundant(size_t clause_index) {
-  assert(!redundant[clause_index]);
   assert(clause_index<controls.size());
+  if (redundant[clause_index]) return; //already known redundant
   ++redundant_count;
   redundant[clause_index] = true;
   solver.addClause(~mkLit(controls[clause_index]));
