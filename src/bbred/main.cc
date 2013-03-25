@@ -17,9 +17,14 @@ using std::cin;
 using std::setprecision;
 
 Reader* make_reader(string flafile);
-
+void print_usage(const char*);
 
 int main(int argc, char** argv) {
+  if (argc!=2) {
+    cerr<<"Error parsing options."<<endl;
+    print_usage(argc ? argv[0] : "bbred");
+    exit(100);
+  }
   //read input
   Reader* fr = make_reader(string(argv[1]));  
   ReadCNF reader(*fr);
@@ -55,4 +60,9 @@ Reader* make_reader(string flafile) {
   }
   assert(0);
   return NULL;
+}
+
+void print_usage(const char* program_name) {
+  cout<<"USAGE: "<<program_name<<" <qdimacs_filename>"<<endl;
+  cout<<"  Note: If filename is -, then the formula is read from standard input."<<endl;
 }
