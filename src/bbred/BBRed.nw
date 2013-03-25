@@ -319,9 +319,9 @@ given for sanity-check reasons.
 <<Implementation>>=
 void BBRed::prune_might_be(LitBitSet& might_be, const vec<lbool>& model, Lit to_test) {
   assert((var(to_test)>=model.size()) ||
-         !sign(to_test) || model[var(to_test)]!=l_True);
+         !sign(to_test) || model[var(to_test)]!=l_False);
   assert((var(to_test)>=model.size()) ||
-         sign(to_test) || model[var(to_test)]!=l_False);
+         sign(to_test) || model[var(to_test)]!=l_True);
 
   const Var limit = std::min(model.size(),max_id+1);
   for (int i=1; i<limit; ++i) {
