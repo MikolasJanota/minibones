@@ -313,14 +313,14 @@ void BBRed::build_assumptions(Lit to_test, vec<Lit>& assumptions) {
 
 @ If [[to_test]] is found {\em not} to be a backbone, a model
 containing [[to_test]] is also returned. Remove from [[might_be]] all
-literals that do not appear in this model. The literal [[[to_test]] is
+literals that do not appear in this model. The literal [[to_test]] is
 given for sanity-check reasons.
 
 <<Implementation>>=
 void BBRed::prune_might_be(LitBitSet& might_be, const vec<lbool>& model, Lit to_test) {
-  assert((var(to_test)>=model.size) ||
+  assert((var(to_test)>=model.size()) ||
          !sign(to_test) || model[var(to_test)]!=l_True);
-  assert((var(to_test)>=model.size) ||
+  assert((var(to_test)>=model.size()) ||
          sign(to_test) || model[var(to_test)]!=l_False);
 
   const Var limit = std::min(model.size(),max_id+1);
