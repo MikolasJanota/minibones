@@ -1,8 +1,9 @@
-DEPFILE	 = .depends
-DEPTOKEN = '\# MAKEDEPENDS'
-DEPFLAGS = -Y -f $(DEPFILE) -s $(DEPTOKEN)
-CSRCS    = $(wildcard *.cc) $(wildcard ../Lit*.cc) $(wildcard ../Read*.cc) ../minisat_aux.cc
-COBJS    = $(CSRCS:.cc=.o)
+GENCC = BBRed.cc
+GENHH = BBRed.hh
+ORIGCSRCS = $(filter-out $(GENCC), $(wildcard *.cc) ) \
+            $(wildcard ../Lit*.cc) $(wildcard ../Read*.cc) ../minisat_aux.cc
+CSRCS     = $(ORIGCSRCS) $(GENCC)
+COBJS     = $(CSRCS:.cc=.o)
 
 LIBD =
 LIBS =
@@ -43,8 +44,7 @@ CFLAGS+=-static
 LNFLAGS+=-static
 endif
 
-
-NW_FILTER=-filter /home/mikolas/bin/noweb-2.11b/contrib/kostas/C++.filter
+NW_FILTER=-filter C++.filter
 
 TARGET=bbred
 
@@ -71,14 +71,14 @@ lib:  sources m $(COBJS)
 ## Clean rule
 clean:
 	@rm -f  lib$(TARGET).a $(TARGET) $(TARGET).exe $(COBJS)
+	@rm -f `cat .gitignore`
 	@rm -f $(DEPFILE)
 	@export MROOT=`pwd`/../minisat ; cd ../minisat/core; make CXX=$(CXX) clean
 
-sources: BBRed.cc BBRed.hh
+sources: $(GENCC) $(GENHH)
 
 BBRed.cc: BBRed.hh
 main.cc: BBRed.hh
-
 
 BBRed.cc: BBRed.nw
 	notangle -L -RBBRed.cc BBRed.nw >BBRed.cc
@@ -88,8 +88,8 @@ BBRed.hh: BBRed.nw
 
 doc: BBRed.pdf
 
-%.pdf:  %.tex
-	@latexmk -pdf $<
+%.pdf:  %.tex texheader.tex Makefile
+	latexmk -pdf $<
 
 %.tex:  %.nw
 	noweave -x $(NW_FILTER) $< | \
