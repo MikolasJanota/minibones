@@ -409,9 +409,9 @@ void BBRed::build_core(const vec<Lit>& conflict,
     const Lit reason = conflict[i];
     if (bb_lit==reason) continue;
     assert(sign(reason));
-    const auto i = control2index.find(var(reason));
-    assert(i!=control2index.end());
-    core[i->second]=true;
+    const auto clause_index = control2index.find(var(reason));
+    assert(clause_index!=control2index.end());
+    core[clause_index->second]=true;
   }
 }
 
