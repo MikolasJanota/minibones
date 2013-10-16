@@ -78,13 +78,8 @@ CoreBased.hh: CoreBased.nw
 CoreBased.cc: CoreBased.nw
 	notangle -L -RCoreBased.cc CoreBased.nw >CoreBased.cc
 
-doc:
-	noweave -index -autodefs c  CoreBased.nw | \
-        sed 's/documentclass{article}/documentclass{article}\\usepackage[pdftex,colorlinks=true,linkcolor=blue]{hyperref}/' > CoreBased.tex
-	pdflatex CoreBased && pdflatex CoreBased
-
-docf:
-	noweave -index -autodefs c -filter /home/mikolas/bin/noweb-2.11b/contrib/kostas/C++.filter CoreBased.nw | \
+doc: CoreBased.nw
+	noweave -index -filter C++.filter CoreBased.nw | \
         sed 's/documentclass{article}/documentclass{article}\\usepackage[pdftex,colorlinks=true,linkcolor=blue]{hyperref}/' > CoreBased.tex
 	pdflatex CoreBased && pdflatex CoreBased
 
