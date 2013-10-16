@@ -1,0 +1,31 @@
+#!/bin/bash
+
+PATH=${PATH}:.
+PS="-l -r -eic2 -ec3 -e" 
+ST=${RANDOM}
+
+FAIL=false
+ls -rS ../btests/*.cnf | while read f 
+do 
+  N=`basename ${f}`
+  echo $N
+  TEST_STR=""
+  for P in ${PS} ""; do
+    OF=/tmp/${N}.${P}.${ST}.out
+    ../src/minibones ${P}  $f 2>/dev/null >${OF}
+    TEST_STR=${TEST_STR}" v "${OF} 
+  done
+  bbcmp.py ${TEST_STR}
+
+  if [ $? != 0 ]; then
+    FAIL=true
+  fi 
+done
+
+if $FAIL; then
+  echo FAIL
+  exit 100
+else
+  echo OK
+  exit 0
+fi

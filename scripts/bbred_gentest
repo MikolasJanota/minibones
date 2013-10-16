@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# File:  bbred_gentest
+# Author:  mikolas
+# Created on:  Mon Mar 25 16:36:00 WET 2013
+# Copyright (C) 2013, Mikolas Janota
+#
+if [[ $# != 1 ]]; then
+    echo "Usage: $0 <#iterations>"
+    exit 100;
+fi
+
+N=$1
+while [[ $N > 0 ]]; do
+  let N=$N-1
+  echo $N
+  OF=/tmp/bbred_gentest_${RANDOM}
+  echo -n 'gen,'
+  rcnf.py .25 200 300 >${OF}
+  echo -n 'test,'
+  if ./bbred_test $OF; then 
+    /bin/rm $OF
+  else
+    cp $OF BUG_`date +%s`.cnf
+    echo FAIL
+    exit 100
+  fi
+done
+echo OK
+exit 0
+

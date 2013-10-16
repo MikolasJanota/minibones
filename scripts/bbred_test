@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# File:  bbred_test
+# Author:  mikolas
+# Created on:  Mon Mar 25 14:56:20 WET 2013
+# Copyright (C) 2013, Mikolas Janota
+#
+if [[ $# != 1 ]]; then
+    echo "Usage: $0 CNF"
+    exit 100;
+fi
+OF=/tmp/bbrt${RANDOM}
+../src/bbred/bbred $1 >${OF} 2>>/tmp/bbred_test
+cnf_equiv $1 $OF >/dev/null 2>/dev/null
+R=$?
+rm -f ${OF}
+if [[ $R == 0 ]]; then 
+  echo OK
+  exit 0
+fi
+echo FAIL
+exit 100

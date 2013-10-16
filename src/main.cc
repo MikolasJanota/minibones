@@ -17,7 +17,6 @@
 #include "CoreBased.hh"
 #include "UpperBoundProg.hh"
 
-
 using std::cout;
 using std::cin;
 using std::setprecision;
@@ -34,6 +33,7 @@ Range           range;
 bool            instance_sat = false;
 
 void print_usage();
+void print_header();
 void print_header(ToolConfig& config);
 bool parse_options(int argc, char** argv, /*out*/ToolConfig& config);
 void print_backbone(const BackboneInformation& worker, const Range& range, ToolConfig& config, ostream& output);
@@ -45,6 +45,7 @@ void register_sig_handlers();
 void initialize_picosat();
 
 int main(int argc, char** argv) {
+  print_header();
   register_sig_handlers();
   if (!parse_options(argc, argv, config) || print_help) {
      print_usage();
@@ -68,10 +69,10 @@ int main(int argc, char** argv) {
   } else {
     return_value = run_worker(config, output);
   }
-  cout << "i complete" << endl;
+  if (return_value==10||return_value==20) 
+    cout << "i complete" << endl;
   return return_value;
 }
-
 
 Reader* make_reader(string flafile) {
   gzFile ff=Z_NULL;
@@ -97,7 +98,7 @@ int run_upper_bound(ToolConfig& config, ostream& output) {
 
   //determine which part of variables to compute backbone of
   range=Range(1,reader.get_max_id());
-  output << "range: "<<range.first<<"-"<<range.second<<endl;
+  output << "c range: "<<range.first<<"-"<<range.second<<endl;
   pupperbound = new UpperBound(config,output, reader.get_max_id(), reader.get_clause_vector());
   UpperBound& upperbound=*pupperbound;
   if (!upperbound.initialize()) {//unsatisfiable
@@ -123,13 +124,18 @@ int run_upper_bound(ToolConfig& config, ostream& output) {
 
 int run_core_based(ToolConfig& config, ostream& output) {
   //read input
-  Reader* fr = make_reader(config.get_input_file_name());  
+  Reader* fr = make_reader(config.get_input_file_name());
   ReadCNF reader(*fr);
-  reader.read();
+  try {
+    reader.read();
+  } catch (const ReadCNFException& e) {
+    cerr<<"ERROR while reading: "<<e.what()<<"."<<endl;
+    return 100;
+  }
 
   //determine which part of variables to compute backbone of
   range=Range(1,reader.get_max_id());
-  output << "range: "<<range.first<<"-"<<range.second<<endl;
+  output << "c range: "<<range.first<<"-"<<range.second<<endl;
   pcorebased = new CoreBased(config, output, reader.get_max_id(), reader.get_clause_vector());
   CoreBased& corebased=*pcorebased;
   if (!corebased.initialize()) {//unsatisfiable
@@ -186,13 +192,18 @@ int run_upper_bound_prog(ToolConfig& config, ostream& output) {
 
 int run_worker(ToolConfig& config, ostream& output) {
   //read input
-  Reader* fr = make_reader(config.get_input_file_name());  
+  Reader* fr = make_reader(config.get_input_file_name());
   ReadCNF reader(*fr);
-  reader.read();
+  try {
+    reader.read();
+  } catch (const ReadCNFException& e) {
+    cerr<<"ERROR while reading: "<<e.what()<<"."<<endl;
+    return 100;
+  }
 
   //determine which part of variables to compute backbone of
   range=Range(1,reader.get_max_id());
-  output << "range: "<<range.first<<"-"<<range.second<<endl;
+  output << "c range: "<<range.first<<"-"<<range.second<<endl;
   pworker = new Worker(config,output, reader.get_max_id(), reader.get_clause_vector(), range);
   Worker& worker=*pworker;
   if (!worker.initialize()) {//unsatisfiable
@@ -240,20 +251,8 @@ void print_backbone(const BackboneInformation& worker, const Range& range, ToolC
 //jpms:ec
 
 void print_header(ToolConfig& config) {
-  cout_pref<<"*** "<<toolname<<": a backbone tool ***" << endl;
-  cout_pref<<"*** release date: "<<release_date<<" ***"<<endl;
-  cout_pref<<"*** release ref: "<<changeset<<" ***"<<endl;
-  cout_pref<<"*** built: "<<build_date<<" ***"<<endl;
-  cout_pref<<"*** author: "<<authorname<<" (" << authoremail << ") ***"<<endl;
-  cout_pref<<"*** contributors: "<<contribs<<" ***"<<endl;
-  cout_pref<<endl;
-  cout_pref<<"*** instance: " << config.get_input_file_name() << " ***"<<endl;
-  //cout_pref << "Running bbones ... " << endl;
-  //cout_pref<<"Instance: " << filename << endl;
-  //cout_pref<<"Run time configuration:" << config.get_cmdstr() << endl;
-  string cfgstr; config.get_cfgstr(cfgstr);
-  cout_pref<<"*** config:"<<cfgstr<<" ***"<<endl;
-  //cout_pref<<"*** config:"<<config.get_cmdstr()<<" ***"<<endl;
+  cout_pref<<"contributors: "<<contribs<<endl;
+  cout_pref<<"instance: " << config.get_input_file_name()<<endl;
   cout_pref<<endl;
 }
 
@@ -394,14 +393,20 @@ static void finishup() {
 }
 
 
+void print_header() {
+  cerr<<"c minibones, a tool for backbone computation"<<std::endl;
+  cerr<<"c (C) 2012,2013 Mikolas Janota, mikolas.janota@gmail.com"<<std::endl;
+}
+
 void print_usage() {
-  cout << "USAGE"<<"\tminibones [file name]"<<endl;
+  cout << "USAGE"<<"\tminibones <file name>"<<endl;
   cout<<"    -l ... lifting"<<endl;
   cout<<"    -b ... variable activity bumping"<<endl;
   cout<<"    -r ... rotatable variables"<<endl;
+  cout<<"    -e ... corE based approach"<<endl;
   cout<<"    -u ... upper bound"<<endl;
-  cout<<"    -c S ... chunk of size S (requires -u)"<<endl;
-  cout<<"    -m ... rando*m* content of  chunks(requires -u)"<<endl;
+  cout<<"    -c S ... chunk of size S (requires -u or -e)"<<endl;
+  cout<<"    -m ... rando*m* content of  chunks (requires -u)"<<endl;
   cout<<"    -i ... insertion of the backbone into the formula after it has been found (this is default in lower bound)"<<endl;
   cout<<"    -k ... which *k*eeps a literal in the chunk until it is decided whether it is  a backbone or not (requires -u)."<<endl;
   cout<<"    -p ... programming chunks (one big clause is programmed to represent different chunks)"<<endl;

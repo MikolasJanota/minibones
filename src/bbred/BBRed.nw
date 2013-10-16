@@ -97,6 +97,7 @@ unordered_map<int, vector<size_t> > lit2indices;
 is being constructed using the following method.
 
 <<Private members>>=
+size_t bbcount;
 bool inverted;
 void invert(const CNF& cnf);
 
@@ -216,7 +217,8 @@ described in previous section are populated properly.
 
 <<Implementation>>=
 BBRed::BBRed(Var max_id, const CNF& cnf)
-: inverted(false)
+: bbcount(0)
+, inverted(false)
 , controls(cnf.size(), 0)
 , max_id(max_id)
 , redundant(cnf.size(), false)
@@ -272,6 +274,7 @@ void BBRed::run() {
    if (isbb) handle_backbone(might_be, must_be, to_test, solver.conflict);
    else prune_might_be(might_be,solver.model,to_test);
  }
+ std::cerr<<"BB count: "<<bbcount<<std::endl;
 }
 
 @ First, let us look and how [[might_be]] is initialized before the
@@ -343,7 +346,6 @@ void BBRed::prune_might_be(LitBitSet& might_be,
      if (val!=l_True) might_be.remove(mkLit(i));
      if (val!=l_False) might_be.remove(~mkLit(i));
   }
-
 }
 
 @ If a literal [[bb]] is found to be a backbone, the SAT solver gives
@@ -364,6 +366,7 @@ void BBRed::handle_backbone(
   Lit bb, const vec<Lit>& conflict) {
   assert(might_be.get(bb));
   assert(!must_be.get(bb));
+  ++bbcount;
   might_be.remove(bb);
   must_be.add(bb);
 
@@ -371,11 +374,13 @@ void BBRed::handle_backbone(
   build_core(conflict, core, bb);
 
   const auto& bb_clauses = contain(bb);
+  size_t old_redundant_count = redundant_count;
   FOR_EACH(cit,bb_clauses) {
     const size_t clause_index = *cit;
     if (!core[clause_index])
       mark_redundant(clause_index);
   }
+  std::cerr<<"remove: "<<(redundant_count-old_redundant_count)<<std::endl;
 }
 
 @ Once we find out that a clause is redundant, we mark it as redundant
@@ -405,6 +410,7 @@ void BBRed::build_core(const vec<Lit>& conflict,
                        vector<bool>& core,
                        Lit bb_lit) {
   assert(core.size()==controls.size());
+  size_t c=0;
   for (int i=0; i<conflict.size(); ++i) {
     const Lit reason = conflict[i];
     if (bb_lit==reason) continue;
@@ -412,7 +418,9 @@ void BBRed::build_core(const vec<Lit>& conflict,
     const auto clause_index = control2index.find(var(reason));
     assert(clause_index!=control2index.end());
     core[clause_index->second]=true;
+    ++c;
   }
+  std::cerr<<"csz: "<<c<<std::endl;
 }
 
 @ Declarations of the private methods used above follow.
