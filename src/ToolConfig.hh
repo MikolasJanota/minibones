@@ -11,10 +11,10 @@
 using std::string;
 using std::ostream;
 
-static const char* const build_date         = ""BUILDDATE"";
+//static const char* const build_date         = ""BUILDDATE"";
 //static const char* dist_date    = ""DISTDATE"";
-static const char* const changeset          = ""CHANGESET"";
-static const char* const release_date       = ""RELDATE"";
+//static const char* const changeset          = ""CHANGESET"";
+//static const char* const release_date       = ""RELDATE"";
 //static const char* release      = "0.5";
 static const char* const toolname     = "MiniBones";
 static const char* const authorname   = "Mikolas Janota";

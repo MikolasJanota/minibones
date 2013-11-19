@@ -321,34 +321,6 @@ void print_header(ToolConfig& config) {
 
 //jpms:bc
 /*----------------------------------------------------------------------------*\
- * Purpose: Print runtime header when executing BBones.
-\*----------------------------------------------------------------------------*/
-//jpms:ec
-
-void print_header(ToolConfig& config, const char* fname)
-{
-  cout_pref<<"*** "<<toolname<<": a backbone tool ***" << endl;
-  cout_pref<<"*** release date: "<<release_date<<" ***"<<endl;
-  cout_pref<<"*** release ref: "<<changeset<<" ***"<<endl;
-#ifdef XPMODE
-  cout_pref<<"*** changeset: "<<changeset<<" ***"<<endl;
-#endif
-  cout_pref<<"*** built: "<<build_date<<" ***"<<endl;
-  cout_pref<<"*** author: "<<authorname<<" (" << authoremail << ") ***"<<endl;
-  cout_pref<<"*** contributors: "<<contribs<<" ***"<<endl;
-  cout_pref<<endl;
-  cout_pref<<"*** instance: " << fname << " ***"<<endl;
-  //cout_pref << "Running bbones ... " << endl;
-  //cout_pref<<"Instance: " << filename << endl;
-  //cout_pref<<"Run time configuration:" << config.get_cmdstr() << endl;
-  string cfgstr; config.get_cfgstr(cfgstr);
-  cout_pref<<"*** config:"<<cfgstr<<" ***"<<endl;
-  //cout_pref<<"*** config:"<<config.get_cmdstr()<<" ***"<<endl;
-  cout_pref<<endl;
-}
-
-//jpms:bc
-/*----------------------------------------------------------------------------*\
  * Purpose: Handler for external signals, namely SIGHUP and SIGINT.
 \*----------------------------------------------------------------------------*/
 //jpms:ec

@@ -100,8 +100,6 @@ t:
 clean:
 	@rm -f minibones minibones.exe $(COBJS)
 	@export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) clean
-	@rm -rf ./minisat/objs
-	@cd picosat ; make clean
 	@rm -f $(DEPFILE)
 
 ### Makefile ends here
