@@ -9,7 +9,7 @@
 
 ClausesInversion::ClausesInversion(const CNF& source) {invert(source);}
 
-ClausesInversion::ClausesInversion(const ClausesInversion& orig) {}
+ClausesInversion::ClausesInversion(const ClausesInversion&) {assert(0);}
 
 ClausesInversion::~ClausesInversion() { clear(); }
 
