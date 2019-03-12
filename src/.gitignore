@@ -1,4 +1,3 @@
-minisat/core/depend.mk
 # Ignore autosafe/backup/temporary files 
 *.hh~
 *.cc~
@@ -9,3 +8,17 @@ minibones.exe
 minibones
 # Ignore objects
 *.o
+makeenv
+minisat/core/depend.mk
+minisat/core/*.a
+*.d
+*.gcda
+*.gcno
+*.gcov
+*.stackdump
+gmon.out
+# Ignore generated
+githeaddef
+defs.h
+CoreBased.cc
+CoreBased.hh

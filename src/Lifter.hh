@@ -8,7 +8,7 @@
 #ifndef MODELREDUCE_HH
 #define	MODELREDUCE_HH
 #include <vector>
-#include "core/SolverTypes.h"
+#include "minisat/core/SolverTypes.h"
 #include "auxiliary.hh"
 #include "heap.hh"
 #include "ClausesInversion.hh"

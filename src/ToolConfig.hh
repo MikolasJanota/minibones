@@ -11,16 +11,10 @@
 using std::string;
 using std::ostream;
 
-//static const char* const build_date         = ""BUILDDATE"";
-//static const char* dist_date    = ""DISTDATE"";
-//static const char* const changeset          = ""CHANGESET"";
-//static const char* const release_date       = ""RELDATE"";
-//static const char* release      = "0.5";
 static const char* const toolname     = "MiniBones";
 static const char* const authorname   = "Mikolas Janota";
 static const char* const authoremail  = "mikolas.janota@gmail.com";
 static const char* const contribs     = "J. Marques-Silva & I. Lynce";
-
 
 //jpms:bc
 /*----------------------------------------------------------------------------*\
@@ -182,38 +176,6 @@ public:
   int get_phase() { return _phase; }
 
   void set_phase(int nph) { _phase = nph; }
-
-  void get_cfgstr(string& cfgstr) {
-//    cfgstr += " -v ";
-//    cfgstr += convert<int>(_verbosity);
-//
-//    cfgstr += " -T ";
-//    cfgstr += convert<int>(_timeout);
-//
-//    if (!_comp_fmt)  { cfgstr += " -nocomp"; }
-//    if (_stats)      { cfgstr += " -st"; }
-//    if (_enum_mode)  { cfgstr += " -enum"; }
-//    if (_iter_mode)  { cfgstr += " -iter"; }
-//
-//    if (_iter_mode) {
-//      if (_incr_mode)  { cfgstr += " -incr"; }
-//      if (!_incr_mode) { cfgstr += " -ninc"; }
-//    }
-//
-//    if (get_nodc_pruning()) { cfgstr += " -nodc"; }
-//    if (get_vldc_pruning()) { cfgstr += " -vldc"; }
-//    if (get_scdc_pruning()) { cfgstr += " -scdc"; }
-//
-//    cfgstr += " -opt ";
-//    cfgstr += convert<int>(_opt_level);
-//
-//    cfgstr += " -run ";
-//    cfgstr += convert<int>(_runs_pvar);
-//
-//    cfgstr += " -ph ";
-//    cfgstr += convert<int>(_phase);
-  }
-
 protected:
 
   void set_run_mode(bool en_mode, bool it_mode) {

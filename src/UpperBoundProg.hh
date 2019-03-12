@@ -8,7 +8,7 @@
 #define UPPERBOUNDPROG_HH_24653
 #include <vector>
 #include <functional>
-#include "core/Solver.h"
+#include "minisat/core/Solver.h"
 #include "auxiliary.hh"
 #include "Lifter.hh"
 #include "LitBitSet.hh"

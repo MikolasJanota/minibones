@@ -18,7 +18,7 @@ public:
   const_VarIterator(const VarSet& ls, size_t x);
   const_VarIterator(const const_VarIterator& mit) : ls(mit.ls), i(mit.i) {}
   inline const_VarIterator& operator++();
-  inline const Var operator*() const;
+  inline Var operator*() const;
   bool operator==(const const_VarIterator& rhs) { assert(&ls==&(rhs.ls)); return i==rhs.i;}
   bool operator!=(const const_VarIterator& rhs) { assert(&ls==&(rhs.ls)); return i!=rhs.i;}
 private:
@@ -80,7 +80,7 @@ inline const_VarIterator& const_VarIterator::operator++() {
   return *this;
 }
 
-inline const Var const_VarIterator::operator*() const {
+inline Var const_VarIterator::operator*() const {
   assert(ls.get(i));
   return (Var)i;
 }

@@ -7,13 +7,16 @@
 
 #ifndef MINISAT_AUX_HH
 #define	MINISAT_AUX_HH
-#include "core/Solver.h"
+#include "minisat/core/Solver.h"
 #include "auxiliary.hh"
 #include <ostream>
 using std::ostream;
 using std::vector;
 using Minisat::Solver;
 using Minisat::lbool;
+using Minisat::l_False;
+using Minisat::l_True;
+using Minisat::l_Undef;
 using Minisat::mkLit;
 using Minisat::sign;
 using Minisat::var;
@@ -35,6 +38,7 @@ ostream& operator << (ostream& outs, Lit lit);
 
 ostream& print(ostream& out, const vec<Lit>& lv);
 inline ostream& operator << (ostream& out, const vec<Lit>& lv) { return print(out,lv); }
+inline ostream& operator << (ostream& out, const Minisat::LSet& lv) { return print(out,lv.toVec()); }
 
 inline size_t literal_index(Lit l) { 
   assert(var(l) > 0);

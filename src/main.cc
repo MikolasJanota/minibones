@@ -37,20 +37,40 @@ void print_header();
 void print_header(ToolConfig& config);
 bool parse_options(int argc, char** argv, /*out*/ToolConfig& config);
 void print_backbone(const BackboneInformation& worker, const Range& range, ToolConfig& config, ostream& output);
-int  run_worker(ToolConfig& config, ostream& output);
+int run_worker(ToolConfig& config, ostream& output);
 int run_upper_bound(ToolConfig& config, ostream& output);
 int run_core_based(ToolConfig& config, ostream& output);
 int run_upper_bound_prog(ToolConfig& config, ostream& output);
 void register_sig_handlers();
 void initialize_picosat();
+char *_strdup(const char *s);
 
 int main(int argc, char** argv) {
   print_header();
   register_sig_handlers();
+#ifndef EXPERT
+  // prepare nonexpert options
+  int nargc = 0;
+  char* nargv[20];
+  nargv[nargc++] = _strdup(argv[0]);
+  nargv[nargc++] = _strdup("-e");
+  nargv[nargc++] = _strdup("-i");
+  nargv[nargc++] = _strdup("-c");
+  nargv[nargc++] = _strdup("100");
+  nargv[nargc++] = argc>=2 ? _strdup(argv[1]) : _strdup("-");
+  if (argc>2) {
+    cerr<<"ERROR: ingoring some options after FILENAME"<<std::endl;
+    return 100;
+  }
+  parse_options(nargc, nargv, config);
+  while (nargc--) delete[] nargv[nargc];
+#else
+  cout<<"c WARNING: running in the EXPERT mode, I'm very stupid without any options."<<std::endl;
   if (!parse_options(argc, argv, config) || print_help) {
      print_usage();
-     return -1;
+     return 100;
   }
+#endif
 
   print_header(config);
   ostream& output=std::cout;
@@ -146,6 +166,7 @@ int run_core_based(ToolConfig& config, ostream& output) {
   }
   instance_sat = true;
   //run corebased
+  cout << "c CoreBased algorithm, chunk: " << config.get_chunk_size()  << endl;
   corebased.run();
   config.prefix(output) << "computation completed " << endl;
   cout << "i sc:" << corebased.get_solver_calls() << endl;
@@ -367,7 +388,7 @@ static void finishup() {
 
 void print_header() {
   cerr<<"c minibones, a tool for backbone computation"<<std::endl;
-  cerr<<"c (C) 2012,2013 Mikolas Janota, mikolas.janota@gmail.com"<<std::endl;
+  cerr<<"c (C) 2012 Mikolas Janota, mikolas.janota@gmail.com"<<std::endl;
 }
 
 void print_usage() {
@@ -384,4 +405,11 @@ void print_usage() {
   cout<<"    -p ... programming chunks (one big clause is programmed to represent different chunks)"<<endl;
   cout << "NOTES:"<<endl;
   cout <<"   if filename is '-', instance is read from the standard input" << endl;
+}
+
+char *_strdup(const char *s) {
+    size_t sz = strlen(s) + 1;
+    char *p = new char[sz];
+    while (sz--) p[sz] = s[sz];
+    return p;
 }

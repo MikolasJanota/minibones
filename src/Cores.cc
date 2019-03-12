@@ -44,6 +44,6 @@ bool Cores::try_to_flip(const LitBitSet& might_be, vec<Lit>& reasons) {
   reasons.clear();
   if (satisfiable) return true;
   CORE_DBG( cerr << "core: " << solver.conflict << endl; )
-  solver.conflict.copyTo(reasons);
+  solver.conflict.toVec().copyTo(reasons);
   return false;
 }

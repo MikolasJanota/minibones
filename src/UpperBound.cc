@@ -88,7 +88,7 @@ void UpperBound::run() {
         if (l==relaxation_literal) continue;
         const Var v=var(literals[i]);
         solver.bump(v);
-        solver.setPolarity(v, sign(l));
+        solver.setPolarity(v, sign(l) ? l_True : l_False);
       }
     }
     UPPERBOUND_DBG( cerr << "chunk clause: " << literals << endl; );

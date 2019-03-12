@@ -1,10 +1,9 @@
-/* 
+/*
  * File:   Worker.hh
  * Author: mikolas
  *
  * Created on March 19, 2011, 4:51 PM
  */
-
 #ifndef WORKER_HH
 #define	WORKER_HH
 #include <vector>
@@ -16,11 +15,7 @@
 #include "ToolConfig.hh"
 #include "Rotatable.hh"
 #include "BackboneInformation.hh"
-#ifdef USE_PICOSAT
-#include "PicoWrap.hh"
-#else
-#include "core/Solver.h"
-#endif
+#include "minisat/core/Solver.h"
 
 using Minisat::Solver;
 using Minisat::Lit;
@@ -66,11 +61,7 @@ namespace minibones {
     size_t       to_test_count; // number of literals still to be tested
     BBInfo       bbInfo;
   private:// sub-objects
-#ifdef USE_PICOSAT
-    PicoWrap    solver;
-#else
     Solver      solver;
-#endif
     Lifter      lifter;      // used to reduce models
     Rotatable   rotatable_computer;      // used to get rotatable variables
   private:// backbone testing
@@ -91,7 +82,7 @@ namespace minibones {
   };
 
   bool Worker::debone(const Lit& literal) {
-    bool return_value =  bbInfo.debone(literal);
+    bool return_value = bbInfo.debone(literal);
     if (return_value && to_test[(size_t)var(literal)])  {
       assert (to_test_count>0);
       --to_test_count;

@@ -7,7 +7,7 @@
 
 #ifndef MINISATEXT_HH
 #define	MINISATEXT_HH
-#include "core/Solver.h"
+#include "minisat/core/Solver.h"
 
 namespace Minisat {
   class MiniSatExt : public Solver {

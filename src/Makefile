@@ -1,76 +1,98 @@
-# BUILDDATE = $(shell date +'%Y-%b-%d %R')
-# DISTDATE  = $(shell date +'%Y-%m-%d')
-# CURRDATE  = $(shell date +'%Y%m%d')
-# CHANGESET = $(shell $(SRCDIR)/scripts/hg-changeset)
+# -include githeaddef
 
-DEPFILE	 = .depends
-DEPTOKEN = '\# MAKEDEPENDS'
-DEPFLAGS = -Y -f $(DEPFILE) -s $(DEPTOKEN)
+PROGRAM_NAME=minibones
+
+GENF=CoreBased.hh CoreBased.cc
 CSRCS    = $(wildcard *.cc)
 COBJS    = $(CSRCS:.cc=.o)
+PROF_OBJS  = $(COBJS:.o=.gcda) $(COBJS:.o=.gcno) $(COBJS:.o=.gcov)
+DEPENDS = ${COBJS:.o=.d}
+PDFS    = $(NSRCS:.nw=.pdf)
 LIBD =
 LIBS =
 CXX?=g++
+CC?=gcc
+
+CCFLAGS+=-I.
 
 ifdef PROF
-CFLAGS+=-pg
+CCFLAGS+=-fprofile-arcs -ftest-coverage
+CCFLAGS+=-pg
+CCFLAGS+=-g
+LNFLAGS+=-fprofile-arcs
 LNFLAGS+=-pg
+LNFLAGS+=-g
 endif
 
 ifdef DBG
-CFLAGS+=-O0
-CFLAGS+=-ggdb
-CFLAGS+=-DDBG
-MSAT=libd
+CCFLAGS+=-O0
+CCFLAGS+=-ggdb
+CCFLAGS+=-DDBG
+MINISAT_DIR=./minisat/build/debug/lib
+MSAT=ld
 else
-MSAT=libr
-CFLAGS+=-DNDEBUG
-CFLAGS+=-O3
+CCFLAGS+=-DNDEBUG
+CCFLAGS+=-O3
+MSAT=lr
+MINISAT_DIR=./minisat/build/release/lib
 endif
+
+LIBD+=-L$(MINISAT_DIR)
+MINISAT_LIB=$(MINISAT_DIR)/libminisat.a
 
 ifdef NOO
-CFLAGS+=-O0
+CCFLAGS+=-O0
 endif
 
-CFLAGS += -Wall -DBUILDDATE='"$(BUILDDATE)"' -DDISTDATE='"$(DISTDATE)"'
-CFLAGS += -DCHANGESET='"$(CHANGESET)"' -DRELDATE='"$(RELDATE)"'
-CFLAGS+=-D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS -Wno-parentheses -Wno-deprecated -D _MSC_VER
-CFLAGS+=-I./minisat/
-CFLAGS+=-I./picosat/
-CFLAGS+=-std=c++0x
+CCFLAGS += -Wall -Wextra -DBUILDDATE='"$(BUILDDATE)"' -DDISTDATE='"$(DISTDATE)"'
+CCFLAGS+=-std=c++17
+CCFLAGS+=-pedantic
+CCFLAGS+=-MMD
 LIBS+=-lz
 
 ifdef STATIC
-CFLAGS+=-static
+CCFLAGS+=-static
 LNFLAGS+=-static
 endif
 
-ifdef USE_PICOSAT
-CFLAGS+=-DUSE_PICOSAT
-OTHER="./picosat/*.o"
-SAT_SOLVER=p
-else
-LIBS+=-lminisat
-LIBD+=-L./minisat/core
-SAT_SOLVER=m
+ifdef EXPERT # allows using giving options, without options the solver's fairly dumb
+CCFLAGS+=-DEXPERT
 endif
 
-.PHONY: m p t sources
 
-all:  minibones
+LIBS+=-lminisat
+CCFLAGS+=-I./minisat
 
-minibones: sources $(SAT_SOLVER) $(COBJS)
+.PHONY: sources all doc satmake make_defs
+
+all: make_defs satmake
+	$(MAKE) sources
+	$(MAKE) $(PROGRAM_NAME)
+
+satmake:
+	@cd ./minisat ; $(MAKE) CXX=$(CXX) $(MSAT)
+
+make_defs:
+	@./update_defs.sh
+
+$(PROGRAM_NAME):  $(COBJS) $(MINISAT_LIB)
 	@echo Linking: $@
-	$(CXX) -o $@ $(COBJS) $(OTHER) $(LNFLAGS) $(LIBD) $(LIBS)
+	$(CXX) -o $@ $(COBJS) $(LNFLAGS) $(LIBD) $(LIBS)
 
-m:
-	export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) LIB=minisat $(MSAT)
+$(MINISAT_LIB): satmake
 
-p:
-	cd picosat ; make
+sources: $(GENF)
 
+%.o: %.cc Makefile
+	@echo Compiling: $@
+	$(CXX) $(CCFLAGS) -c -o $@ $<
 
-sources: CoreBased.hh CoreBased.cc
+clean:
+	@rm -f $(DEPENDS)
+	@rm -f $(GENF)
+	@rm -f $(PROF_OBJS)
+	@rm -f $(PROGRAM_NAME) $(PROGRAM_NAME).exe $(COBJS) *.tab.[ch]
+	cd ./minisat/; $(MAKE) clean
 
 CoreBased.hh: CoreBased.nw
 	notangle -L -RCoreBased.hh CoreBased.nw >CoreBased.hh
@@ -83,24 +105,4 @@ doc: CoreBased.nw
         sed 's/documentclass{article}/documentclass{article}\\usepackage[pdftex,colorlinks=true,linkcolor=blue]{hyperref}/' > CoreBased.tex
 	pdflatex CoreBased && pdflatex CoreBased
 
-depend:
-	rm -f $(DEPFILE)
-	@echo $(DEPTOKEN) > $(DEPFILE)
-	makedepend $(DEPFLAGS) -- $(CFLAGS) -- $(CSRCS)
-
-t:
-	bash -c './minibones ../examples/t1.cnf ; [ $$? == 10 ]'
-
-## Build rule
-%.o:	%.cc
-	@echo Compiling: $@
-	@$(CXX) $(CFLAGS) -c -o $@ $<
-
-## Clean rule
-clean:
-	@rm -f minibones minibones.exe $(COBJS)
-	@export MROOT=`pwd`/minisat ; cd ./minisat/core; make CXX=$(CXX) clean
-	@rm -f $(DEPFILE)
-
-### Makefile ends here
-sinclude $(DEPFILE)
+-include ${DEPENDS}

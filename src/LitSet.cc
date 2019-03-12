@@ -5,7 +5,7 @@
  * Copyright (C) 2011, Mikolas Janota
  */
 #include "LitSet.hh"
-#include "mtl/Sort.h"
+#include "minisat/mtl/Sort.h"
 using Minisat::sort;
 using Minisat::LessThan_default;
 LitSet::LitSet(const LiteralVector& lits) {
